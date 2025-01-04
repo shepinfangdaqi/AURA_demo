@@ -14,7 +14,7 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
+//git test
         Navigation.findNavController(this, R.id.nav_host_fragment)
                 .setGraph(R.navigation.nav_graph);
     }
