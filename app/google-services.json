@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "633710403671",
+    "project_id": "aura-d3da4",
+    "storage_bucket": "aura-d3da4.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:633710403671:android:bb53d868cef3d6cc014312",
+        "android_client_info": {
+          "package_name": "com.example.aura_demo"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB_LWGBHSDlCaGYE5ESZPuw4F-Qkqu_wpQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:633710403671:android:e73741628a03a1b1014312",
+        "android_client_info": {
+          "package_name": "com.google.firebase.quickstart.firebasestorage"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB_LWGBHSDlCaGYE5ESZPuw4F-Qkqu_wpQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

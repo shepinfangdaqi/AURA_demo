@@ -1,0 +1,58 @@
+<resources>
+    <string name="app_name">AURA_demo</string>
+    <string name="action_settings">Settings</string>
+    <!-- Strings used for fragments for navigation -->
+    <string name="first_fragment_label">First Fragment</string>
+    <string name="second_fragment_label">Second Fragment</string>
+    <string name="next">Next</string>
+    <string name="previous">Previous</string>
+
+    <string name="sign_in">Sign In</string>
+    <string name="create_account">Create Account</string>
+    <string name="hint_email">Email</string>
+    <string name="hint_password">Password</string>
+    <string name="desc_firebase_lockup">Firebase logo and name</string>
+    <string name="emailpassword_title_text">Email and Password</string>
+    <string name="signed_out">Signed Out</string>
+    <string name="sign_out">Sign Out</string>
+    <string name="verify_email">Verify</string>
+    <string name="loading">Loading…</string>
+    <string name="hint_verification_code">Verification Code</string>
+    <string name="verify_phone_auth">Verify</string>
+    <string name="auth_failed">Authentication failed</string>
+
+    <string name="reload">Reload</string>
+    <string name="scan_bluetooth_devices">Scan Bluetooth Devices</string>
+    <string name="go_to_login_page">Login out</string>
+    <string name="go_to_profile_page">Upload your photo</string>
+    <string name="go_to_calendar">Choose calendar</string>
+    <string name="go_to_settings_page">Bluetooth</string>
+    <string name="download">Download</string>
+    <string name="download_the_uploaded_file">Download the uploaded file</string>
+    <string name="upload_photo">Upload photo</string>
+    <string name="take_a_photo_to_upload">Take a photo to upload</string>
+    <string name="sign_in_anonymously">Sign in anonymously</string>
+    <string name="please_sign_in_to_continue">Please sign in to continue</string>
+
+    <string name="progress_downloading">Downloading…</string>
+    <string name="progress_uploading">Uploading…</string>
+    <string name="progress_auth">Signing In…</string>
+
+    <string name="upload_success">Upload finished</string>
+    <string name="upload_failure">Upload failed</string>\
+
+    <string name="download_success">Download finished</string>
+    <string name="download_failure">Download failure</string>
+    <string name="success">Success\n</string>
+
+
+    <string name="camera_button_text">Upload</string>
+    <string name="sign_in_prompt">Sign In to begin</string>
+    <string name="take_photo_prompt">Upload your Photo</string>
+
+    <string name="rationale_storage">This sample reads images from your camera to demonstrate uploading.</string>
+    <string name="label_link">Choose your picture</string>
+    <string name="label_download">Download File</string>
+    <string name="log_out">Log out</string>
+
+</resources>

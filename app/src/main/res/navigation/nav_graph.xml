@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/nav_graph"
+    app:startDestination="@id/EmailPasswordFragment">
+
+
+    <!--  设置页面跳转选择按钮  -->
+    <fragment
+        android:id="@+id/mainFragment"
+        android:name="com.example.aura_demo.MainFragment"
+        tools:layout="@layout/fragment_main">
+        <action
+            android:id="@+id/action_mainFragment_to_loginFragment"
+            app:destination="@id/EmailPasswordFragment" />
+        <action
+            android:id="@+id/action_mainFragment_to_profileFragment"
+            app:destination="@id/uploadFragment" />
+        <action
+            android:id="@+id/action_mainFragment_to_bluetoothFragment"
+            app:destination="@id/bluetoothFragment" />
+        <action
+            android:id="@+id/action_mainFragment_to_calendar"
+            app:destination="@id/uploadFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/bluetoothFragment"
+        android:name="com.example.aura_demo.BluetoothFragment"
+        tools:layout="@layout/fragment_bluetooth">
+    </fragment>
+
+    <fragment
+        android:id="@+id/uploadFragment"
+        android:name="com.example.aura_demo.UploadFragment"
+        tools:layout="@layout/fragment_upload">
+    </fragment>
+
+    <fragment
+        android:id="@+id/EmailPasswordFragment"
+        android:name="com.example.aura_demo.LoginFragment"
+        tools:layout="@layout/fragment_login">
+
+        <action
+            android:id="@+id/action_emailPasswordFragment_to_userProfileFragment"
+            app:destination="@id/mainFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/UserProfileFragment"
+        android:name="com.example.aura_demo.UserProfileFragment"
+        tools:layout="@layout/fragment_user_profile" >
+
+        <action
+            android:id="@+id/action_userProfileFragment_to_emailPasswordFragment"
+            app:destination="@id/EmailPasswordFragment" />
+    </fragment>
+
+</navigation>
