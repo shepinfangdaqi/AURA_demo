@@ -49,6 +49,10 @@ public class MainFragment extends Fragment {
         Button buttonToSettings = view.findViewById(R.id.button_to_settings);
         buttonToSettings.setOnClickListener(v -> navController.navigate(R.id.action_mainFragment_to_bluetoothFragment));
 
+        Button button_calendar = view.findViewById(R.id.button_calendar);
+//        button_calendar.setOnClickListener(v -> navController.navigate(R.id.action_mainFragment_to_firebase));
+        button_calendar.setOnClickListener(v -> navController.navigate(R.id.action_mainFragment_to_deviceList));
+
         return view;
     }
 }

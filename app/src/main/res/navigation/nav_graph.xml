@@ -23,12 +23,33 @@
         <action
             android:id="@+id/action_mainFragment_to_calendar"
             app:destination="@id/uploadFragment" />
+        <action
+            android:id="@+id/action_mainFragment_to_firebase"
+            app:destination="@id/firebaseFragment" />
+        <action
+            android:id="@+id/action_mainFragment_to_deviceList"
+            app:destination="@+id/deviceListFragment" />
     </fragment>
 
     <fragment
         android:id="@+id/bluetoothFragment"
         android:name="com.example.aura_demo.BluetoothFragment"
         tools:layout="@layout/fragment_bluetooth">
+    </fragment>
+
+    <fragment
+        android:id="@+id/deviceListFragment"
+        android:name="com.example.aura_demo.DeviceListFragment"
+        tools:layout="@layout/fragment_device_list">
+        <action
+            android:id="@+id/action_deviceListFragment_to_uploadFragment"
+            app:destination="@id/uploadFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/firebaseFragment"
+        android:name="com.example.aura_demo.FirebaseFragment"
+        tools:layout="@layout/fragment_firebase">
     </fragment>
 
     <fragment

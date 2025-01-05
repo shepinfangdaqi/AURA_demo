@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/cardViewDevice"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginBottom="8dp"
+    app:cardElevation="4dp"
+    app:cardCornerRadius="8dp"
+    app:strokeWidth="1dp"
+    app:strokeColor="#DDDDDD">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:padding="16dp"
+        android:gravity="center_vertical">
+
+        <!-- 设备图标 -->
+        <ImageView
+            android:id="@+id/imageViewIcon"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:src="@drawable/image1"/><!-- 替换为实际图标 -->
+<!--        android:contentDescription="Device Icon"-->
+<!--        android:tint="?attr/colorPrimary" />-->
+
+        <!-- 设备信息 -->
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:layout_marginStart="16dp">
+
+            <!-- Status -->
+            <TextView
+                android:id="@+id/textViewStatus"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="状态: 在线"
+                android:textSize="16sp"
+                android:textColor="@android:color/black" />
+
+            <!-- Mode -->
+            <TextView
+                android:id="@+id/textViewMode"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="模式: 自动"
+                android:textSize="16sp"
+                android:textColor="@android:color/black" />
+
+            <!-- Frequency -->
+            <TextView
+                android:id="@+id/textViewFrequency"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="频率: 60Hz"
+                android:textSize="16sp"
+                android:textColor="@android:color/black" />
+
+        </LinearLayout>
+
+        <!-- 可选：右箭头图标，表示可点击 -->
+<!--        <ImageView-->
+<!--            android:id="@+id/imageViewArrow"-->
+<!--            android:layout_width="24dp"-->
+<!--            android:layout_height="24dp"-->
+<!--            android:src="@drawable/image2"-->
+<!--            android:contentDescription="Arrow"-->
+<!--            android:tint="@android:color/darker_gray" />-->
+
+    </LinearLayout>
+
+</com.google.android.material.card.MaterialCardView>

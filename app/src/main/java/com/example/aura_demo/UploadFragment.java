@@ -151,6 +151,18 @@ public class UploadFragment extends Fragment implements View.OnClickListener {
 
         // Request notification permissions
         askNotificationPermission();
+
+        // 获取传递的参数
+        // 获取传递的参数
+        Bundle args = getArguments();
+        if (args != null) {
+            // 添加参数的键名
+            String deviceId = args.getString("deviceId");
+            String deviceName = args.getString("deviceName");
+            Log.d("UploadFragment", "Device ID: " + deviceId + ", Device Name: " + deviceName);
+            Toast.makeText(getContext(), "设备ID: " + deviceId + ", 设备名称: " + deviceName, Toast.LENGTH_LONG).show();
+            // 根据需要使用这些参数进行操作
+        }
     }
 
     @Override
