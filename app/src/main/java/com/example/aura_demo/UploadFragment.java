@@ -62,6 +62,10 @@ public class UploadFragment extends Fragment implements View.OnClickListener {
 
     private FragmentUploadBinding binding;
 
+    private List<String> imagePaths;
+
+    private final List<String> downloadUrls = new ArrayList<>();;
+
     private ActivityResultLauncher<String[]> intentLauncher;
     private final ActivityResultLauncher<String> requestPermissionLauncher =
             registerForActivityResult(new ActivityResultContracts.RequestPermission(), isGranted -> {
@@ -107,6 +111,7 @@ public class UploadFragment extends Fragment implements View.OnClickListener {
         }
     };
 
+
     public UploadFragment() {
         // Required empty public constructor
     }
@@ -129,8 +134,18 @@ public class UploadFragment extends Fragment implements View.OnClickListener {
 
         // Click listeners
         binding.buttonCamera.setOnClickListener(this);
-        binding.buttonSignIn.setOnClickListener(this);
-//        binding.buttonDownload.setOnClickListener(this);
+        binding.viewPager.registerOnPageChangeCallback(new ViewPager2.OnPageChangeCallback(){
+            @Override
+            public void onPageSelected(int position){
+                super.onPageSelected(position);
+                Log.i(TAG, "onPageSelected: " + position);
+                if(position >= 0 && position < downloadUrls.size()){
+                    String currentUri = downloadUrls.get(position);
+                    Log.d(TAG, "页面切换到位置 " + position + ", 图片 URI: " + currentUri);
+                    // 这里可以更新 UI 或执行其他操作
+                }
+            }
+        });
 
         // Restore instance state
         if (savedInstanceState != null){
@@ -152,7 +167,6 @@ public class UploadFragment extends Fragment implements View.OnClickListener {
         // Request notification permissions
         askNotificationPermission();
 
-        // 获取传递的参数
         // 获取传递的参数
         Bundle args = getArguments();
         if (args != null) {
@@ -247,32 +261,6 @@ public class UploadFragment extends Fragment implements View.OnClickListener {
         intentLauncher.launch(new String[]{"image/*"});
     }
 
-    /**
-     * Signs in anonymously using Firebase Authentication
-     */
-    private void signInAnonymously(){
-        // Sign in anonymously. Authentication is required to read or write from Firebase Storage.
-        showProgressBar(getString(R.string.progress_auth));
-        mAuth.signInAnonymously()
-                .addOnSuccessListener(getActivity(), new OnSuccessListener<AuthResult>() {
-                    @Override
-                    public void onSuccess(AuthResult authResult){
-                        Log.d(TAG, "signInAnonymously:SUCCESS");
-                        hideProgressBar();
-                        updateUI(authResult.getUser());
-                        // After sign-in, fetch user image paths
-                        fetchUserImagePaths();
-                    }
-                })
-                .addOnFailureListener(getActivity(), new OnFailureListener(){
-                    @Override
-                    public void onFailure(@NonNull Exception exception){
-                        Log.e(TAG, "signInAnonymously:FAILURE", exception);
-                        hideProgressBar();
-                        updateUI(null);
-                    }
-                });
-    }
 
     /**
      * Handles the result intent from the upload service
@@ -291,11 +279,9 @@ public class UploadFragment extends Fragment implements View.OnClickListener {
     private void updateUI(FirebaseUser user){
         // Update UI based on user login state
         if(user != null){
-            binding.layoutSignin.setVisibility(View.GONE);
             binding.layoutStorage.setVisibility(View.VISIBLE);
         }
         else{
-            binding.layoutSignin.setVisibility(View.VISIBLE);
             binding.layoutStorage.setVisibility(View.GONE);
         }
 
@@ -315,6 +301,7 @@ public class UploadFragment extends Fragment implements View.OnClickListener {
     /**
      * Fetches the current user's image paths from Firestore and loads them into ViewPager2
      */
+//   TODO: 改成用传到该页面的的参数访问数据
     private void fetchUserImagePaths(){
         FirebaseUser user = mAuth.getCurrentUser();
         if(user == null){
@@ -333,11 +320,11 @@ public class UploadFragment extends Fragment implements View.OnClickListener {
                     @Override
                     public void onSuccess(com.google.firebase.firestore.DocumentSnapshot documentSnapshot){
                         if(documentSnapshot.exists()){
-                            List<String> imagePaths = (List<String>) documentSnapshot.get("imagePaths");
+                            imagePaths = (List<String>) documentSnapshot.get("imagePaths");
                             if(imagePaths != null && !imagePaths.isEmpty()){
                                 // Fetch download URLs
                                 Log.i(TAG, "fetchUserImagePaths: "+imagePaths);
-                                fetchDownloadUrls(imagePaths);
+                                fetchDownloadUrls();
                             }
                             else{
                                 Log.d(TAG, "No image paths found for user.");
@@ -368,9 +355,9 @@ public class UploadFragment extends Fragment implements View.OnClickListener {
     /**
      * Fetches download URLs from Firebase Storage based on the image paths
      */
-    private void fetchDownloadUrls(List<String> imagePaths){
+    private void fetchDownloadUrls(){
         FirebaseStorage storage = FirebaseStorage.getInstance();
-        List<String> downloadUrls = new ArrayList<>();
+//        List<String> downloadUrls = new ArrayList<>();
         int total = imagePaths.size();
         final int[] count = {0};
 
@@ -384,7 +371,7 @@ public class UploadFragment extends Fragment implements View.OnClickListener {
                             count[0]++;
                             if(count[0] == total){
                                 // All download URLs fetched, update ViewPager2
-                                updateViewPager(downloadUrls);
+                                updateViewPager();
                             }
                         }
                     })
@@ -395,7 +382,7 @@ public class UploadFragment extends Fragment implements View.OnClickListener {
                             count[0]++;
                             if(count[0] == total){
                                 // All download URLs fetched, update ViewPager2
-                                updateViewPager(downloadUrls);
+                                updateViewPager();
                             }
                         }
                     });
@@ -405,7 +392,7 @@ public class UploadFragment extends Fragment implements View.OnClickListener {
     /**
      * Updates ViewPager2 with the list of image download URLs
      */
-    private void updateViewPager(List<String> downloadUrls){
+    private void updateViewPager(){
         Log.i(TAG, "updateViewPager: "+downloadUrls);
         ViewPager2 viewPager = binding.viewPager;
         ImageAdapter adapter = (ImageAdapter) viewPager.getAdapter();
@@ -473,9 +460,9 @@ public class UploadFragment extends Fragment implements View.OnClickListener {
         if(i == R.id.buttonCamera){
             launchCamera();
         }
-        else if(i == R.id.buttonSignIn){
-            signInAnonymously();
-        }
+//        else if(i == R.id.buttonSignIn){
+//            signInAnonymously();
+//        }
         else if(i == R.id.buttonDownload){
             beginDownload();
         }

@@ -43,6 +43,7 @@ public class DeviceListFragment extends Fragment {
 
     // 指定的 key
     private static final String SPECIFIC_KEY = "devices"; // 替换为您希望使用的 key
+    private final String TAG = "DeviceList";
 
     public DeviceListFragment() {
         // Required empty public constructor
@@ -117,7 +118,17 @@ public class DeviceListFragment extends Fragment {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot){
                 deviceList.clear();
+                Log.i(TAG, "onDataChange: " + snapshot.getValue());
                 for(DataSnapshot deviceSnapshot : snapshot.getChildren()){
+                    Log.i(TAG, "onDataChange: " + deviceSnapshot.getKey());
+                    Log.d(TAG, "Device Snapshot: " + deviceSnapshot.getValue());
+
+                    // 或者逐个字段输出
+                    for (DataSnapshot childSnapshot : deviceSnapshot.getChildren()) {
+                        String key = childSnapshot.getKey();
+                        Object value = childSnapshot.getValue();
+                        Log.d(TAG, "Field: " + key + " - Value: " + value);
+                    }
                     Device device = deviceSnapshot.getValue(Device.class);
                     if(device != null){
                         deviceList.add(device);

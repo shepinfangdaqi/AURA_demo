@@ -16,9 +16,9 @@ import android.widget.TextView;
 
 public class DeviceAdapter extends RecyclerView.Adapter<DeviceAdapter.DeviceViewHolder> {
 
-    private Context context;
+    private final Context context;
     private List<Device> deviceList;
-    private OnItemClickListener listener;
+    private final OnItemClickListener listener;
 
     // 构造函数
     public DeviceAdapter(Context context, List<Device> deviceList, OnItemClickListener listener) {

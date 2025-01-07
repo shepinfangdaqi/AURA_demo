@@ -33,28 +33,28 @@
             android:textAlignment="center"
             android:textColor="@color/colorAccent" />
 
-        <LinearLayout
-            android:id="@+id/layoutSignin"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:visibility="gone">
+<!--        <LinearLayout-->
+<!--            android:id="@+id/layoutSignin"-->
+<!--            android:layout_width="wrap_content"-->
+<!--            android:layout_height="wrap_content"-->
+<!--            android:orientation="vertical"-->
+<!--            android:visibility="gone">-->
 
-            <TextView
-                android:id="@+id/statusSignIn"
-                style="@style/TextAppearance.AppCompat.Medium"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="@dimen/margin_1"
-                android:text="@string/sign_in_prompt" />
+<!--            <TextView-->
+<!--                android:id="@+id/statusSignIn"-->
+<!--                style="@style/TextAppearance.AppCompat.Medium"-->
+<!--                android:layout_width="wrap_content"-->
+<!--                android:layout_height="wrap_content"-->
+<!--                android:layout_marginBottom="@dimen/margin_1"-->
+<!--                android:text="@string/sign_in_prompt" />-->
 
-            <Button
-                android:id="@+id/buttonSignIn"
-                android:layout_width="@dimen/standard_field_width"
-                android:layout_height="wrap_content"
-                android:text="@string/sign_in_anonymously" />
+<!--            <Button-->
+<!--                android:id="@+id/buttonSignIn"-->
+<!--                android:layout_width="@dimen/standard_field_width"-->
+<!--                android:layout_height="wrap_content"-->
+<!--                android:text="@string/sign_in_anonymously" />-->
 
-        </LinearLayout>
+<!--        </LinearLayout>-->
 
         <!-- 图片滑动区域 -->
         <LinearLayout
@@ -90,6 +90,7 @@
             android:layout_height="wrap_content"
             android:layout_gravity="center_horizontal"
             android:orientation="vertical"
+            android:visibility="invisible"
            >
 
             <TextView
