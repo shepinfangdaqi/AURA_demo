@@ -14,6 +14,7 @@ import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.activity.result.ActivityResultLauncher;
@@ -21,6 +22,7 @@ import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.widget.Toolbar;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
@@ -32,15 +34,22 @@ import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.DocumentReference;
+import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
 import com.example.aura_demo.databinding.FragmentUploadBinding;
 
+import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+
+import cn.leancloud.LCFile;
+import cn.leancloud.LCObject;
+import io.reactivex.Observer;
+import io.reactivex.disposables.Disposable;
 
 /**
  * Fragment to upload and download photos from Firebase Storage.
@@ -67,6 +76,8 @@ public class UploadFragment extends Fragment implements View.OnClickListener {
     private final List<String> downloadUrls = new ArrayList<>();;
 
     private ActivityResultLauncher<String[]> intentLauncher;
+
+    private TextView textViewTitle;
     private final ActivityResultLauncher<String> requestPermissionLauncher =
             registerForActivityResult(new ActivityResultContracts.RequestPermission(), isGranted -> {
                 if (isGranted) {
@@ -169,14 +180,49 @@ public class UploadFragment extends Fragment implements View.OnClickListener {
 
         // 获取传递的参数
         Bundle args = getArguments();
+        String type = "";
         if (args != null) {
             // 添加参数的键名
             String deviceId = args.getString("deviceId");
             String deviceName = args.getString("deviceName");
+            type = args.getString("type");
             Log.d("UploadFragment", "Device ID: " + deviceId + ", Device Name: " + deviceName);
             Toast.makeText(getContext(), "设备ID: " + deviceId + ", 设备名称: " + deviceName, Toast.LENGTH_LONG).show();
             // 根据需要使用这些参数进行操作
         }
+        Log.i(TAG, "onViewCreated: ");
+//        test();
+        Toolbar toolbar = view.findViewById(R.id.topAppBar);
+
+        // 动态设置标题内容
+        String dynamicTitle = type; // 根据您的逻辑获取标题
+        toolbar.setTitle(dynamicTitle);
+
+    }
+
+    public void test(){
+        // 构建对象
+        Log.i(TAG, "test: ");
+        LCObject todo = new LCObject("Todo");
+
+// 为属性赋值
+        todo.put("title",   "工程师周会");
+        todo.put("content", "周二两点，全体成员");
+
+// 将对象保存到云端
+        todo.saveInBackground().subscribe(new Observer<LCObject>() {
+            public void onSubscribe(Disposable disposable) {}
+            public void onNext(LCObject todo) {
+                // 成功保存之后，执行其他逻辑
+                System.out.println("保存成功。objectId：" + todo.getObjectId());
+            }
+            public void onError(Throwable throwable) {
+                // 异常处理
+            }
+            public void onComplete() {
+                Log.i(TAG, "onComplete: ");
+            }
+        });
     }
 
     @Override
@@ -254,10 +300,11 @@ public class UploadFragment extends Fragment implements View.OnClickListener {
     /**
      * Launches the image picker to select a photo
      */
-    private void launchCamera(){
+    private void launchCamera() throws FileNotFoundException {
         Log.d(TAG, "launchCamera");
 
-        // Pick an image from storage
+        // Pick an image from storage、
+//        LCFile file = LCFile.withAbsoluteLocalPath("avatar.jpg", "/tmp/avatar.jpg");
         intentLauncher.launch(new String[]{"image/*"});
     }
 
@@ -316,9 +363,9 @@ public class UploadFragment extends Fragment implements View.OnClickListener {
 
         // Fetch the user document
         userDocRef.get()
-                .addOnSuccessListener(new OnSuccessListener<com.google.firebase.firestore.DocumentSnapshot>() {
+                .addOnSuccessListener(new OnSuccessListener<DocumentSnapshot>() {
                     @Override
-                    public void onSuccess(com.google.firebase.firestore.DocumentSnapshot documentSnapshot){
+                    public void onSuccess(DocumentSnapshot documentSnapshot){
                         if(documentSnapshot.exists()){
                             imagePaths = (List<String>) documentSnapshot.get("imagePaths");
                             if(imagePaths != null && !imagePaths.isEmpty()){
@@ -458,11 +505,16 @@ public class UploadFragment extends Fragment implements View.OnClickListener {
     public void onClick(View v){
         int i = v.getId();
         if(i == R.id.buttonCamera){
-            launchCamera();
+            try {
+                launchCamera();
+            } catch (FileNotFoundException e) {
+                throw new RuntimeException(e);
+            }
         }
-//        else if(i == R.id.buttonSignIn){
+        else if(i == R.id.button_choose){
 //            signInAnonymously();
-//        }
+            Log.i(TAG, "onClick: button_choose");
+        }
         else if(i == R.id.buttonDownload){
             beginDownload();
         }

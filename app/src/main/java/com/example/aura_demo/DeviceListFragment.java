@@ -1,5 +1,9 @@
 package com.example.aura_demo;
 
+import static com.example.aura_demo.R.*;
+
+import android.annotation.SuppressLint;
+import android.content.Intent;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
@@ -30,11 +34,28 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.firebase.database.ValueEventListener;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.io.FileNotFoundException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+
+import cn.leancloud.LCCloud;
+import cn.leancloud.LCFile;
+import cn.leancloud.LCObject;
+import cn.leancloud.LCUser;
+import io.reactivex.Observable;
+import io.reactivex.Observer;
+import io.reactivex.android.schedulers.AndroidSchedulers;
+import io.reactivex.disposables.Disposable;
+import io.reactivex.schedulers.Schedulers;
 
 public class DeviceListFragment extends Fragment {
 
+    private static final Logger log = LoggerFactory.getLogger(DeviceListFragment.class);
     private DeviceAdapter deviceAdapter;
     private List<Device> deviceList;
 
@@ -57,6 +78,11 @@ public class DeviceListFragment extends Fragment {
     public void onCreate(Bundle savedInstanceState){
         super.onCreate(savedInstanceState);
         setHasOptionsMenu(true); // 使 Fragment 可以接收菜单事件
+        ECBLE.onBLECharacteristicValueChange((String str, String strHex) -> {
+            // 更新 ViewModel
+            Log.i("DeviceActivity", "onCreate: "+str);
+        });
+
     }
 
     @Override
@@ -85,8 +111,62 @@ public class DeviceListFragment extends Fragment {
             public void onItemClick(Device device){
                 // 处理设备项点击事件
                 // TODO: 实现跳转逻辑
-                navigateToUploadFragment(device);
+//                navigateToUploadFragment(device);
                 Toast.makeText(getContext(), "点击设备: " + device.getMode(), Toast.LENGTH_SHORT).show();
+            }
+
+
+            @SuppressLint("CheckResult")
+            @Override
+            public void onMenuItemClick(Device device, int menuItemId) throws FileNotFoundException {
+                Log.i(TAG, "onMenuItemClick: "+  R.id.action_calendar_mode);
+                if (menuItemId == R.id.action_calendar_mode){
+                    LCFile file = LCFile.withAbsoluteLocalPath("11.jpeg", "/storage/emulated/0/Download/11.jpeg");
+                    file.saveInBackground().subscribe(new Observer<LCFile>() {
+                        public void onSubscribe(Disposable disposable) {}
+                        public void onNext(LCFile file) {
+                            System.out.println("文件保存完成。URL：" + file.getUrl() + "，文件名：" + file.getObjectId());
+                            String id = file.getObjectId();
+                            callCloudFunctionWithObservable(id);
+                            
+                        }
+                        public void onError(Throwable throwable) {
+                            // 保存失败，可能是文件无法被读取，或者上传过程中出现问题
+                        }
+                        public void onComplete() {}
+                    });
+
+
+
+                    send("AT_ID?\r\n");
+//                    navigateToUploadFragment(device,"日历");
+                    Log.i(TAG, "onMenuItemClick: 日历");
+                } else if (menuItemId == R.id.action_beautiful_image_mode) {
+                    navigateToUploadFragment(device,"美图模式");
+                    Log.i(TAG, "onMenuItemClick: 美图模式");
+                } else if (menuItemId == id.action_custom_image) {
+                    navigateToUploadFragment(device,"自选模式");
+                    Log.i(TAG, "onMenuItemClick: 自选图片");
+                }
+//                switch(menuItemId) {
+//                    case R.id.action_calendar_mode:
+//                        // 处理日历模式
+//                        Toast.makeText(getContext(), "选择了日历模式: " + device.getDeviceName(), Toast.LENGTH_SHORT).show();
+//                        //
+//                        break;
+//                    case R.id.action_beautiful_image_mode:
+//                        // 处理美图模式
+//                        Toast.makeText(getContext(), "选择了美图模式: " + device.getDeviceName(), Toast.LENGTH_SHORT).show();
+//                        //
+//                        break;
+//                    case R.id.action_custom_image:
+//                        // 处理自选图片
+//                        Toast.makeText(getContext(), "选择了自选图片: " + device.getDeviceName(), Toast.LENGTH_SHORT).show();
+//                        // 
+//                        break;
+//                    default:
+//                        break;
+//                }
             }
         });
         recyclerViewDevices.setAdapter(deviceAdapter);
@@ -104,10 +184,77 @@ public class DeviceListFragment extends Fragment {
                 if(item.getItemId() == R.id.action_add){
                     // 处理添加按钮点击事件
                     // TODO: 实现添加设备逻辑，如弹出对话框
-                    Toast.makeText(getContext(), "点击添加按钮", Toast.LENGTH_SHORT).show();
+                    // 启动 MainBLUEActivity
+//                    Intent intent = new Intent(requireContext(), MainBLUEActivity.class);
+//                    startActivity(intent);
+                    Navigation.findNavController(requireView()).navigate(id.action_deviceListFragment_to_blueFragment);
+//                    Toast.makeText(getContext(), "点击添加按钮", Toast.LENGTH_SHORT).show();
                     return true;
                 }
                 return false;
+            }
+        });
+        ECBLE.onBLECharacteristicValueChange((String str, String strHex) -> {
+            // 更新 ViewModel
+            Log.i("DeviceList", "onViewCreated: "+str);
+        });
+        send("AT_ID?\r\n");
+//        test();
+    }
+
+
+    @SuppressLint("CheckResult")
+    public void callCloudFunctionWithObservable(String id) {
+        // 获取当前用户（如果需要认证用户）
+        LCUser currentUser = LCUser.getCurrentUser();
+
+        // 创建一个参数 Map
+        Map<String, Object> params = new HashMap<>();
+        params.put("fileId", id);
+
+        // 调用云函数并返回 Observable
+        Observable<Object> observable = LCCloud.callFunctionInBackground(currentUser, "convert_image_to_bin", params);
+
+        // 订阅 Observable，处理云函数的结果
+        observable
+                .subscribeOn(Schedulers.io()) // 在 IO 线程进行网络请求
+                .observeOn(AndroidSchedulers.mainThread()) // 在主线程更新 UI
+                .subscribe(
+                        result -> {
+                            // 云函数调用成功，处理返回的结果
+                            Log.d("CloudFunction", "Result: " + result.toString());
+                        },
+                        throwable -> {
+                            // 云函数调用失败，处理错误
+                            Log.e("CloudFunction", "Error: " + throwable.getMessage());
+                        }
+                );
+    }
+    public void send(String data){
+        Log.i(TAG, "send: data"+data);
+        ECBLE.writeBLECharacteristicValue(data, false);
+    }
+    public void test(){
+        // 构建对象
+        Log.i(TAG, "test: ");
+        LCObject todo = new LCObject("Todo");
+
+// 为属性赋值
+        todo.put("title",   "工程师周会");
+        todo.put("content", "周二两点，全体成员");
+
+// 将对象保存到云端
+        todo.saveInBackground().subscribe(new Observer<LCObject>() {
+            public void onSubscribe(Disposable disposable) {}
+            public void onNext(LCObject todo) {
+                // 成功保存之后，执行其他逻辑
+                System.out.println("保存成功。objectId：" + todo.getObjectId());
+            }
+            public void onError(Throwable throwable) {
+                // 异常处理
+            }
+            public void onComplete() {
+                Log.i(TAG, "onComplete: ");
             }
         });
     }
@@ -152,10 +299,11 @@ public class DeviceListFragment extends Fragment {
     }
 
     // 导航到 UploadFragment 并传递参数
-    private void navigateToUploadFragment(Device device){
+    private void navigateToUploadFragment(Device device,String deviceName){
         Bundle bundle = new Bundle();
         bundle.putString("deviceId", device.getStatus());
         bundle.putString("deviceName", device.getMode());
+        bundle.putString("type",deviceName);
         Navigation.findNavController(requireView()).navigate(R.id.action_deviceListFragment_to_uploadFragment, bundle);
     }
 }

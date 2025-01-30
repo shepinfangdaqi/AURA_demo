@@ -32,6 +32,15 @@
     </fragment>
 
     <fragment
+        android:id="@+id/fragment_main_blue"
+        android:name="com.example.aura_demo.MainBLUEFragment"
+        tools:layout="@layout/fragment_main_blue">
+        <action
+            android:id="@+id/action_mainBLUEFragment_to_deviceList"
+            app:destination="@id/deviceListFragment" />
+    </fragment>
+
+    <fragment
         android:id="@+id/bluetoothFragment"
         android:name="com.example.aura_demo.BluetoothFragment"
         tools:layout="@layout/fragment_bluetooth">
@@ -44,6 +53,10 @@
         <action
             android:id="@+id/action_deviceListFragment_to_uploadFragment"
             app:destination="@id/uploadFragment" />
+        <action
+            android:id="@+id/action_deviceListFragment_to_blueFragment"
+            app:destination="@+id/fragment_main_blue">
+        </action>
     </fragment>
 
     <fragment

@@ -47,12 +47,16 @@
 
 
     <string name="camera_button_text">Upload</string>
+    <string name="button_choose">Choose this</string>
     <string name="sign_in_prompt">Sign In to begin</string>
     <string name="take_photo_prompt">Upload your Photo</string>
+    <string name="choose_photo">Choose your Photo</string>
 
     <string name="rationale_storage">This sample reads images from your camera to demonstrate uploading.</string>
     <string name="label_link">Choose your picture</string>
     <string name="label_download">Download File</string>
     <string name="log_out">Log out</string>
+    <string name="menu_options">choose mode\n</string>
+    <string name="title_name">蓝牙连接</string>
 
 </resources>

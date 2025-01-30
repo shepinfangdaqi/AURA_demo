@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:id="@+id/action_calendar_mode"
+        android:title="日历模式" />
+    <item
+        android:id="@+id/action_beautiful_image_mode"
+        android:title="美图模式" />
+    <item
+        android:id="@+id/action_custom_image"
+        android:title="自选图片" />
+</menu>

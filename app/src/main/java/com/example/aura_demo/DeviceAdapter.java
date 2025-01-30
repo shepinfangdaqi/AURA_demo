@@ -2,16 +2,20 @@ package com.example.aura_demo;
 
 import android.content.Context;
 import android.view.LayoutInflater;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 
 import androidx.recyclerview.widget.RecyclerView;
 
 
-
+import java.io.FileNotFoundException;
 import java.util.List;
 
+import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.PopupMenu;
 import android.widget.TextView;
 
 public class DeviceAdapter extends RecyclerView.Adapter<DeviceAdapter.DeviceViewHolder> {
@@ -30,6 +34,7 @@ public class DeviceAdapter extends RecyclerView.Adapter<DeviceAdapter.DeviceView
     // 定义点击事件接口
     public interface OnItemClickListener {
         void onItemClick(Device device);
+        void onMenuItemClick(Device device, int menuItemId) throws FileNotFoundException;
     }
 
     @Override
@@ -57,12 +62,15 @@ public class DeviceAdapter extends RecyclerView.Adapter<DeviceAdapter.DeviceView
         TextView textViewFrequency;
         ImageView imageViewArrow;
 
+        ImageButton buttonMore;
+
         public DeviceViewHolder(View itemView) {
             super(itemView);
             imageViewIcon = itemView.findViewById(R.id.imageViewIcon);
             textViewStatus = itemView.findViewById(R.id.textViewStatus);
             textViewMode = itemView.findViewById(R.id.textViewMode);
             textViewFrequency = itemView.findViewById(R.id.textViewFrequency);
+            buttonMore = itemView.findViewById(R.id.buttonMore);
 //            imageViewArrow = itemView.findViewById(R.id.imageViewArrow);
         }
 
@@ -88,6 +96,13 @@ public class DeviceAdapter extends RecyclerView.Adapter<DeviceAdapter.DeviceView
                     listener.onItemClick(device);
                 }
             });
+
+            buttonMore.setOnClickListener(new View.OnClickListener(){
+                @Override
+                public void onClick(View v){
+                    showPopupMenu(v, device, listener);
+                }
+            });
         }
     }
 
@@ -95,5 +110,28 @@ public class DeviceAdapter extends RecyclerView.Adapter<DeviceAdapter.DeviceView
     public void updateData(List<Device> newDeviceList) {
         this.deviceList = newDeviceList;
         notifyDataSetChanged();
+    }
+
+    private static void showPopupMenu(View view, final Device device, final OnItemClickListener listener){
+        // 创建 PopupMenu
+        PopupMenu popupMenu = new PopupMenu(view.getContext(), view);
+        MenuInflater inflater = popupMenu.getMenuInflater();
+        inflater.inflate(R.menu.menu_device_options, popupMenu.getMenu());
+
+        // 设置菜单项点击监听器
+        popupMenu.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener(){
+            @Override
+            public boolean onMenuItemClick(MenuItem item){
+                try {
+                    listener.onMenuItemClick(device, item.getItemId());
+                } catch (FileNotFoundException e) {
+                    throw new RuntimeException(e);
+                }
+                return true;
+            }
+        });
+
+        // 显示菜单
+        popupMenu.show();
     }
 }

@@ -1,114 +1,136 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/fragment_upload"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:fillViewport="true"
-    android:scrollbars="vertical"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
     tools:context="com.example.aura_demo.UploadFragment">
 
-    <LinearLayout
+    <!-- 顶部 Toolbar -->
+    <androidx.appcompat.widget.Toolbar
+        android:id="@+id/topAppBar"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:paddingLeft="@dimen/activity_horizontal_margin"
-        android:paddingTop="@dimen/activity_vertical_margin"
-        android:paddingRight="@dimen/activity_horizontal_margin"
-        android:paddingBottom="@dimen/activity_vertical_margin">
+        android:layout_height="?attr/actionBarSize"
+        android:background="?attr/colorPrimary"
+        android:title="设备列表"
+        android:titleTextColor="@android:color/white" />
 
-        <ProgressBar
-            android:id="@+id/progressBar"
-            style="?android:attr/progressBarStyleHorizontal"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:indeterminate="true"
-            android:visibility="invisible" />
+    <!-- 可滚动内容区域 -->
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:fillViewport="true"
+        android:scrollbars="vertical">
 
-        <TextView
-            android:id="@+id/caption"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:gravity="center_horizontal"
-            android:textAlignment="center"
-            android:textColor="@color/colorAccent" />
-
-<!--        <LinearLayout-->
-<!--            android:id="@+id/layoutSignin"-->
-<!--            android:layout_width="wrap_content"-->
-<!--            android:layout_height="wrap_content"-->
-<!--            android:orientation="vertical"-->
-<!--            android:visibility="gone">-->
-
-<!--            <TextView-->
-<!--                android:id="@+id/statusSignIn"-->
-<!--                style="@style/TextAppearance.AppCompat.Medium"-->
-<!--                android:layout_width="wrap_content"-->
-<!--                android:layout_height="wrap_content"-->
-<!--                android:layout_marginBottom="@dimen/margin_1"-->
-<!--                android:text="@string/sign_in_prompt" />-->
-
-<!--            <Button-->
-<!--                android:id="@+id/buttonSignIn"-->
-<!--                android:layout_width="@dimen/standard_field_width"-->
-<!--                android:layout_height="wrap_content"-->
-<!--                android:text="@string/sign_in_anonymously" />-->
-
-<!--        </LinearLayout>-->
-
-        <!-- 图片滑动区域 -->
         <LinearLayout
-            android:id="@+id/layoutDownload"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_gravity="center_horizontal"
             android:orientation="vertical"
-            >
+            android:paddingLeft="@dimen/activity_horizontal_margin"
+            android:paddingTop="@dimen/activity_vertical_margin"
+            android:paddingRight="@dimen/activity_horizontal_margin"
+            android:paddingBottom="@dimen/activity_vertical_margin">
 
-            <TextView
-                style="@style/TextAppearance.AppCompat.Medium"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center_horizontal"
-                android:layout_marginTop="@dimen/margin_2"
-                android:layout_marginBottom="@dimen/margin_1"
-                android:text="@string/label_link" />
-
-            <!-- 使用 ViewPager2 显示图片 -->
-            <androidx.viewpager2.widget.ViewPager2
-                android:id="@+id/viewPager"
+            <!-- 进度条 -->
+            <ProgressBar
+                android:id="@+id/progressBar"
+                style="?android:attr/progressBarStyleHorizontal"
                 android:layout_width="match_parent"
-                android:layout_height="361dp"
-                android:layout_marginTop="16dp" />
+                android:layout_height="wrap_content"
+                android:indeterminate="true"
+                android:visibility="invisible" />
 
-
-        </LinearLayout>
-
-        <LinearLayout
-            android:id="@+id/layoutStorage"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center_horizontal"
-            android:orientation="vertical"
-            android:visibility="invisible"
-           >
-
+            <!-- 标题 TextView -->
             <TextView
-                style="@style/TextAppearance.AppCompat.Medium"
-                android:layout_width="wrap_content"
+                android:id="@+id/caption"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_gravity="center_horizontal"
-                android:layout_marginBottom="@dimen/margin_1"
-                android:text="@string/take_photo_prompt" />
+                android:gravity="center_horizontal"
+                android:textAlignment="center"
+                android:textColor="@color/colorAccent" />
 
-            <Button
-                android:id="@+id/buttonCamera"
-                android:layout_width="@dimen/standard_field_width"
+            <!-- 图片滑动区域 -->
+            <LinearLayout
+                android:id="@+id/layoutDownload"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center_horizontal"
-                android:text="@string/camera_button_text" />
+                android:orientation="vertical">
+
+                <TextView
+                    style="@style/TextAppearance.AppCompat.Medium"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_horizontal"
+                    android:layout_marginTop="@dimen/margin_2"
+                    android:layout_marginBottom="@dimen/margin_1"
+                    android:text="@string/label_link" />
+
+                <!-- 使用 ViewPager2 显示图片 -->
+                <androidx.viewpager2.widget.ViewPager2
+                    android:id="@+id/viewPager"
+                    android:layout_width="match_parent"
+                    android:layout_height="361dp"
+                    android:layout_marginTop="16dp" />
+
+            </LinearLayout>
+
+            <!-- 存储布局 -->
+            <LinearLayout
+                android:id="@+id/layoutStorage"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal"
+                android:orientation="vertical"
+                android:visibility="invisible">
+
+                <TextView
+                    style="@style/TextAppearance.AppCompat.Medium"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_horizontal"
+                    android:layout_marginBottom="@dimen/margin_1"
+                    android:text="@string/take_photo_prompt" />
+
+                <Button
+                    android:id="@+id/buttonCamera"
+                    android:layout_width="@dimen/standard_field_width"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_horizontal"
+                    android:text="@string/camera_button_text" />
+
+            </LinearLayout>
+
+            <!-- 选择照片布局 -->
+            <LinearLayout
+                android:id="@+id/layoutChoosePhoto"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal"
+                android:orientation="vertical"
+                android:visibility="invisible">
+
+                <TextView
+                    style="@style/TextAppearance.AppCompat.Medium"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_horizontal"
+                    android:layout_marginBottom="@dimen/margin_1"
+                    android:text="@string/choose_photo" />
+
+                <Button
+                    android:id="@+id/button_choose"
+                    android:layout_width="@dimen/standard_field_width"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_horizontal"
+                    android:text="@string/button_choose" />
+
+            </LinearLayout>
 
         </LinearLayout>
-    </LinearLayout>
 
-</ScrollView>
+    </ScrollView>
+
+</LinearLayout>

@@ -63,6 +63,17 @@
 
         </LinearLayout>
 
+        <!-- 三个点的按钮 -->
+        <ImageButton
+            android:id="@+id/buttonMore"
+            android:layout_width="wrap_content"
+            android:layout_height="49dp"
+            android:layout_marginStart="80dp"
+
+            android:contentDescription="@string/menu_options"
+            android:src="@drawable/pencil"
+            android:tint="@android:color/black" />
+
         <!-- 可选：右箭头图标，表示可点击 -->
 <!--        <ImageView-->
 <!--            android:id="@+id/imageViewArrow"-->
