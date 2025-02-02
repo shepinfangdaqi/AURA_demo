@@ -14,6 +14,8 @@ import androidx.navigation.Navigation;
 
 import com.google.firebase.auth.FirebaseAuth;
 
+import cn.leancloud.LCUser;
+
 public class MainFragment extends Fragment {
 
     @Nullable
@@ -27,7 +29,8 @@ public class MainFragment extends Fragment {
         // 按钮1：跳转到登录页面
         Button buttonToLogin = view.findViewById(R.id.button_to_login);
         buttonToLogin.setOnClickListener(v -> {
-            FirebaseAuth.getInstance().signOut();
+//            FirebaseAuth.getInstance().signOut();
+            LCUser.logOut();
             navController.navigate(R.id.action_mainFragment_to_loginFragment);
         });
 

@@ -61,6 +61,12 @@ dependencies {
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)
     implementation("pub.devrel:easypermissions:3.0.0")
+    implementation("com.github.yalantis:ucrop:2.2.7")
+//    implementation("cn.leancloud.android:leancloud-android-sdk:4.4.0")
+//    implementation 'com.github.yalantis:ucrop:2.2.6'
+
+//    implementation("com.theartofdev.edmodo:android-image-cropper:2.8.0")
+
 //    implementation ("cn.leancloud:android-sdk:3.7.5")
 }
 configurations.all {

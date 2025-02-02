@@ -40,10 +40,14 @@ public class ImageAdapter extends RecyclerView.Adapter<ImageAdapter.ImageViewHol
 
     @Override
     public void onBindViewHolder(@NonNull ImageViewHolder holder, int position) {
+        String imageUrl = imageUrls.get(position);
+
         // 使用 Glide 加载图片 URL
-        Glide.with(context)
-                .load(imageUrls.get(position))  // 加载图片 URL
-                .into(holder.imageView);        // 显示在 ImageView 中
+        // Use Glide to load the image with the desired size
+        Glide.with(holder.itemView.getContext())
+                .load(imageUrl)
+                .override(800, 480)  // Set the image size to 800x480
+                .into(holder.imageView);
     }
 
     @Override

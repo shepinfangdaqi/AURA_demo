@@ -1,6 +1,7 @@
 package com.example.aura_demo;
 
 //import cn.leancloud.LeanCloud;
+
 import android.annotation.SuppressLint;
 import android.os.Bundle;
 import android.util.Log;
@@ -44,7 +45,8 @@ public class MainActivity extends AppCompatActivity {
         LeanCloud.initialize(this, AppID, AppKey, Server);
 //        test();
         setContentView(R.layout.activity_main);
-        callCloudFunctionWithObservable();
+        // 调用云函数测试
+//        callCloudFunctionWithObservable();
 //git test
         Navigation.findNavController(this, R.id.nav_host_fragment)
                 .setGraph(R.navigation.nav_graph);
@@ -78,24 +80,28 @@ public class MainActivity extends AppCompatActivity {
                 );
     }
 
-    public void test(){
+    public void test() {
         // 构建对象
         LCObject todo = new LCObject("Todo");
 
 // 为属性赋值
-        todo.put("title",   "工程师周会");
+        todo.put("title", "工程师周会");
         todo.put("content", "周二两点，全体成员");
 
 // 将对象保存到云端
         todo.saveInBackground().subscribe(new Observer<LCObject>() {
-            public void onSubscribe(Disposable disposable) {}
+            public void onSubscribe(Disposable disposable) {
+            }
+
             public void onNext(LCObject todo) {
                 // 成功保存之后，执行其他逻辑
                 System.out.println("保存成功。objectId：" + todo.getObjectId());
             }
+
             public void onError(Throwable throwable) {
                 // 异常处理
             }
+
             public void onComplete() {
                 Log.i(TAG, "onComplete: ");
             }

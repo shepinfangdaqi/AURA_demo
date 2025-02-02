@@ -1,61 +1,64 @@
 package com.example.aura_demo;
 
+import static android.app.Activity.RESULT_OK;
+
 import android.Manifest;
-import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.content.pm.PackageManager;
+import android.database.Cursor;
+import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.provider.MediaStore;
 import android.util.Log;
 import android.view.LayoutInflater;
-import android.view.Menu;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.appcompat.app.AlertDialog;
-import androidx.appcompat.widget.Toolbar;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
-import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import androidx.viewpager2.widget.ViewPager2;
 
-import com.google.android.gms.tasks.OnFailureListener;
-import com.google.android.gms.tasks.OnSuccessListener;
-import com.google.firebase.auth.AuthResult;
-import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.auth.FirebaseUser;
-import com.google.firebase.firestore.DocumentReference;
-import com.google.firebase.firestore.DocumentSnapshot;
-import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.storage.FirebaseStorage;
-import com.google.firebase.storage.StorageReference;
-import com.google.firebase.storage.UploadTask;
 import com.example.aura_demo.databinding.FragmentUploadBinding;
+import com.google.android.gms.common.util.IOUtils;
 
+import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Objects;
 
+import cn.leancloud.LCException;
 import cn.leancloud.LCFile;
 import cn.leancloud.LCObject;
+import cn.leancloud.LCQuery;
+import cn.leancloud.LCUser;
+import cn.leancloud.callback.FindCallback;
+import cn.leancloud.callback.GetDataCallback;
+import cn.leancloud.callback.SaveCallback;
 import io.reactivex.Observer;
 import io.reactivex.disposables.Disposable;
 
+import com.yalantis.ucrop.UCrop;
+import com.yalantis.ucrop.UCrop.Options;
+//import com.theartofdev.edmodo.cropper.CropImage;
+//import com.theartofdev.edmodo.cropper.CropImageView;
+
+
 /**
- * Fragment to upload and download photos from Firebase Storage.
- *
- * See {@link MyUploadService} for upload example.
- * See {@link MyDownloadService} for download example.
+ * Fragment to pick images from local storage and upload to LeanCloud,
+ * then display them via ViewPager2.
  */
 public class UploadFragment extends Fragment implements View.OnClickListener {
 
@@ -64,25 +67,25 @@ public class UploadFragment extends Fragment implements View.OnClickListener {
     private static final String KEY_FILE_URI = "key_file_uri";
     private static final String KEY_DOWNLOAD_URL = "key_download_url";
 
-    private FirebaseAuth mAuth;
-
-    private Uri mDownloadUrl = null;
-    private Uri mFileUri = null;
-
     private FragmentUploadBinding binding;
 
-    private List<String> imagePaths;
+    // 选择的图片 URI
+    private Uri mFileUri = null;
+    // 上传后获得的下载地址
+    private Uri mDownloadUrl = null;
 
-    private final List<String> downloadUrls = new ArrayList<>();;
+    // 用于存储用户图片的地址列表
+    private List<String> imagePaths = new ArrayList<>();
+    private List<String> downloadUrls = new ArrayList<>();
 
+    // 向系统选择图片的 ActivityResultLauncher
     private ActivityResultLauncher<String[]> intentLauncher;
 
-    private TextView textViewTitle;
+    // 请求通知权限（仅示例）
     private final ActivityResultLauncher<String> requestPermissionLauncher =
             registerForActivityResult(new ActivityResultContracts.RequestPermission(), isGranted -> {
                 if (isGranted) {
-                    Toast.makeText(getContext(), "Notifications permission granted", Toast.LENGTH_SHORT)
-                            .show();
+                    Toast.makeText(getContext(), "Notifications permission granted", Toast.LENGTH_SHORT).show();
                 } else {
                     Toast.makeText(getContext(),
                             "Can't post notifications without POST_NOTIFICATIONS permission",
@@ -90,47 +93,14 @@ public class UploadFragment extends Fragment implements View.OnClickListener {
                 }
             });
 
-    // BroadcastReceiver to handle upload and download events
-    private BroadcastReceiver mBroadcastReceiver = new BroadcastReceiver() {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            Log.d(TAG, "onReceive:" + intent);
-            hideProgressBar();
-
-            switch (intent.getAction()) {
-                case MyDownloadService.DOWNLOAD_COMPLETED:
-                    // Get number of bytes downloaded
-                    long numBytes = intent.getLongExtra(MyDownloadService.EXTRA_BYTES_DOWNLOADED, 0);
-
-                    // Alert success
-                    showMessageDialog(getString(R.string.success), String.format(Locale.getDefault(),
-                            "%d bytes downloaded from %s",
-                            numBytes,
-                            intent.getStringExtra(MyDownloadService.EXTRA_DOWNLOAD_PATH)));
-                    break;
-                case MyDownloadService.DOWNLOAD_ERROR:
-                    // Alert failure
-                    showMessageDialog("Error", String.format(Locale.getDefault(),
-                            "Failed to download from %s",
-                            intent.getStringExtra(MyDownloadService.EXTRA_DOWNLOAD_PATH)));
-                    break;
-                case MyUploadService.UPLOAD_COMPLETED:
-                case MyUploadService.UPLOAD_ERROR:
-                    onUploadResultIntent(intent);
-                    break;
-            }
-        }
-    };
-
-
     public UploadFragment() {
         // Required empty public constructor
     }
 
     // Inflate the layout for this fragment
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container,
-                             Bundle savedInstanceState){
+    public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
+                             Bundle savedInstanceState) {
         binding = FragmentUploadBinding.inflate(inflater, container, false);
         return binding.getRoot();
     }
@@ -140,108 +110,95 @@ public class UploadFragment extends Fragment implements View.OnClickListener {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState){
         super.onViewCreated(view, savedInstanceState);
 
-        // Initialize Firebase Auth
-        mAuth = FirebaseAuth.getInstance();
-
-        // Click listeners
+        // 点击按钮：选择本地图片
         binding.buttonCamera.setOnClickListener(this);
+
+        // 当 ViewPager2 翻页时，可处理回调
         binding.viewPager.registerOnPageChangeCallback(new ViewPager2.OnPageChangeCallback(){
             @Override
             public void onPageSelected(int position){
                 super.onPageSelected(position);
-                Log.i(TAG, "onPageSelected: " + position);
-                if(position >= 0 && position < downloadUrls.size()){
+                if (position >= 0 && position < downloadUrls.size()) {
                     String currentUri = downloadUrls.get(position);
                     Log.d(TAG, "页面切换到位置 " + position + ", 图片 URI: " + currentUri);
-                    // 这里可以更新 UI 或执行其他操作
                 }
             }
         });
 
-        // Restore instance state
+        // 恢复之前的状态
         if (savedInstanceState != null){
             mFileUri = savedInstanceState.getParcelable(KEY_FILE_URI);
             mDownloadUrl = savedInstanceState.getParcelable(KEY_DOWNLOAD_URL);
         }
 
-        // Register ActivityResultLauncher for picking images
+        // 注册获取图片的 ActivityResultLauncher
         intentLauncher = registerForActivityResult(
-                new ActivityResultContracts.OpenDocument(), fileUri -> {
+                new ActivityResultContracts.OpenDocument(),
+                fileUri -> {
                     if (fileUri != null){
-                        uploadFromUri(fileUri);
+                        startCrop(fileUri);  // 启动裁剪界面
+//                        uploadFromUri(fileUri);
                     } else {
                         Log.w(TAG, "File URI is null");
                         Toast.makeText(getContext(), "未选择任何文件", Toast.LENGTH_SHORT).show();
                     }
-                });
+                }
+        );
 
-        // Request notification permissions
+        // 请求通知权限（仅在 Android 13+）
         askNotificationPermission();
 
-        // 获取传递的参数
+        // 获取传递的参数并设置标题
         Bundle args = getArguments();
         String type = "";
         if (args != null) {
-            // 添加参数的键名
             String deviceId = args.getString("deviceId");
             String deviceName = args.getString("deviceName");
             type = args.getString("type");
             Log.d("UploadFragment", "Device ID: " + deviceId + ", Device Name: " + deviceName);
             Toast.makeText(getContext(), "设备ID: " + deviceId + ", 设备名称: " + deviceName, Toast.LENGTH_LONG).show();
-            // 根据需要使用这些参数进行操作
         }
-        Log.i(TAG, "onViewCreated: ");
-//        test();
-        Toolbar toolbar = view.findViewById(R.id.topAppBar);
+        binding.topAppBar.setTitle(type);
 
-        // 动态设置标题内容
-        String dynamicTitle = type; // 根据您的逻辑获取标题
-        toolbar.setTitle(dynamicTitle);
+        // 如果想测试存数据
+//        testLeanCloudSave();
 
+        // 初始化 ViewPager2 的适配器
+        ViewPager2 viewPager = binding.viewPager;
+        ImageAdapter adapter = new ImageAdapter(requireContext(), new ArrayList<>());
+        viewPager.setAdapter(adapter);
+
+        // 判断当前用户是否已登录
+        updateUI(LCUser.getCurrentUser());
     }
 
-    public void test(){
-        // 构建对象
-        Log.i(TAG, "test: ");
+    /**
+     * 示例方法：创建一个 Todo 对象并保存到 LeanCloud
+     */
+    public void testLeanCloudSave(){
+        Log.i(TAG, "testLeanCloudSave: ");
         LCObject todo = new LCObject("Todo");
-
-// 为属性赋值
-        todo.put("title",   "工程师周会");
+        todo.put("title", "工程师周会");
         todo.put("content", "周二两点，全体成员");
 
-// 将对象保存到云端
         todo.saveInBackground().subscribe(new Observer<LCObject>() {
-            public void onSubscribe(Disposable disposable) {}
-            public void onNext(LCObject todo) {
-                // 成功保存之后，执行其他逻辑
-                System.out.println("保存成功。objectId：" + todo.getObjectId());
+            @Override
+            public void onSubscribe(Disposable d) {}
+            @Override
+            public void onNext(LCObject lcObject) {
+                // 保存成功
+                Log.d(TAG, "保存成功 objectId: " + lcObject.getObjectId());
             }
-            public void onError(Throwable throwable) {
+            @Override
+            public void onError(Throwable e) {
                 // 异常处理
+                Log.e(TAG, "保存失败", e);
             }
+            @Override
             public void onComplete() {
                 Log.i(TAG, "onComplete: ");
             }
         });
-    }
-
-    @Override
-    public void onStart(){
-        super.onStart();
-        updateUI(mAuth.getCurrentUser());
-
-        // Register receiver for uploads and downloads
-        LocalBroadcastManager manager = LocalBroadcastManager.getInstance(requireContext());
-        manager.registerReceiver(mBroadcastReceiver, MyDownloadService.getIntentFilter());
-        manager.registerReceiver(mBroadcastReceiver, MyUploadService.getIntentFilter());
-    }
-
-    @Override
-    public void onStop(){
-        super.onStop();
-
-        // Unregister broadcast receiver
-        LocalBroadcastManager.getInstance(requireContext()).unregisterReceiver(mBroadcastReceiver);
     }
 
     @Override
@@ -252,213 +209,300 @@ public class UploadFragment extends Fragment implements View.OnClickListener {
     }
 
     /**
-     * Starts the upload process from the given URI
-     */
-    private void uploadFromUri(Uri fileUri){
-        Log.d(TAG, "uploadFromUri:src:" + fileUri.toString());
-
-        // Save the File URI
-        mFileUri = fileUri;
-
-        // Clear the last download, if any
-        updateUI(mAuth.getCurrentUser());
-        mDownloadUrl = null;
-
-        // Start MyUploadService to upload the file, so that the file is uploaded
-        // even if this Fragment is killed or put in the background
-        Intent uploadIntent = new Intent(requireContext(), MyUploadService.class)
-                .putExtra(MyUploadService.EXTRA_FILE_URI, fileUri)
-                .setAction(MyUploadService.ACTION_UPLOAD);
-        requireContext().startService(uploadIntent);
-
-        // Show loading spinner
-        showProgressBar(getString(R.string.progress_uploading));
-    }
-
-    /**
-     * Starts the download process (Example)
-     */
-    private void beginDownload(){
-        if(mFileUri == null){
-            Toast.makeText(getContext(), "No file selected for download", Toast.LENGTH_SHORT).show();
-            return;
-        }
-
-        // Get path
-        String path = "photos/" + mFileUri.getLastPathSegment();
-
-        // Kick off MyDownloadService to download the file
-        Intent intent = new Intent(requireContext(), MyDownloadService.class)
-                .putExtra(MyDownloadService.EXTRA_DOWNLOAD_PATH, path)
-                .setAction(MyDownloadService.ACTION_DOWNLOAD);
-        requireContext().startService(intent);
-
-        // Show loading spinner
-        showProgressBar(getString(R.string.progress_downloading));
-    }
-
-    /**
      * Launches the image picker to select a photo
      */
     private void launchCamera() throws FileNotFoundException {
         Log.d(TAG, "launchCamera");
-
-        // Pick an image from storage、
-//        LCFile file = LCFile.withAbsoluteLocalPath("avatar.jpg", "/tmp/avatar.jpg");
+        // 打开系统文件选择器，过滤 image/*
         intentLauncher.launch(new String[]{"image/*"});
     }
 
+    // 启动裁剪功能
+    private void startCrop(Uri sourceUri) {
+        // 创建目标裁剪的Uri
+        Uri destinationUri = Uri.fromFile(new File(getActivity().getCacheDir(), "cropped_image.jpg"));
+
+        // 启动UCrop裁剪界面
+        UCrop.of(sourceUri, destinationUri)
+                .withAspectRatio(800, 480)  // 设置裁切框的比例
+                .withMaxResultSize(800, 480)  // 设置裁切后图片的最大尺寸
+                .start(getContext(), this);  // 启动裁剪活动
+    }
+
+    // 处理裁剪结果
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        if (resultCode == RESULT_OK) {
+            Uri resultUri = UCrop.getOutput(data);
+            if (resultUri != null) {
+                // 在这里处理裁剪后的图片，例如上传
+                Bitmap bitmap = null;
+                try {
+                    bitmap = MediaStore.Images.Media.getBitmap(getContext().getContentResolver(), resultUri);
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+
+                // 等比缩放图片到 800x480
+                Bitmap scaledBitmap = scaleBitmap(bitmap, 800, 481);
+
+                // 在这里上传或保存图片
+                uploadFromBitmap(scaledBitmap);
+            }
+        } else if (resultCode == UCrop.RESULT_ERROR) {
+            Throwable cropError = UCrop.getError(data);
+            if (cropError != null) {
+                Log.e(TAG, "Crop error: ", cropError);
+                Toast.makeText(getContext(), "裁剪失败", Toast.LENGTH_SHORT).show();
+            }
+        }
+    }
+    // 图片等比缩放
+    private Bitmap scaleBitmap(Bitmap originalBitmap, int width, int height) {
+        float ratioBitmap = (float) originalBitmap.getWidth() / (float) originalBitmap.getHeight();
+        float ratioDesired = (float) width / (float) height;
+
+        int scaledWidth = width;
+        int scaledHeight = height;
+
+        // 如果需要等比缩放
+        if (ratioBitmap > ratioDesired) {
+            scaledHeight = (int) (width / ratioBitmap);
+        } else {
+            scaledWidth = (int) (height * ratioBitmap);
+        }
+
+        return Bitmap.createScaledBitmap(originalBitmap, scaledWidth, scaledHeight, false);
+    }
+
+    public void uploadFromBitmap(Bitmap bitmap) {
+        try {
+            showProgressBar(getString(R.string.progress_uploading));
+            // 将 Bitmap 转换为 byte[]
+            ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+            bitmap.compress(Bitmap.CompressFormat.JPEG, 100, byteArrayOutputStream); // 压缩成 JPEG 格式，质量为 80
+            byte[] data = byteArrayOutputStream.toByteArray();
+
+            // 创建 LCFile 对象，用于上传
+            LCFile lcFile = new LCFile("uploaded_image.jpg", data);  // 文件名可以根据需要动态生成
+
+            // 异步上传文件
+            lcFile.saveInBackground().subscribe(new Observer<LCFile>() {
+                @Override
+                public void onSubscribe(Disposable d) {
+                    // 上传开始时的处理
+                }
+
+                @Override
+                public void onNext(LCFile lcFile) {
+                    // 上传成功的处理
+                    Log.d(TAG, "File uploaded: " + lcFile.getUrl() + " | ObjectId: " + lcFile.getObjectId());
+
+                    // 获取当前登录的用户
+                    LCUser currentUser = LCUser.getCurrentUser();
+                    if (currentUser != null) {
+                        // 获取用户的 imagePaths 字段（如果没有则初始化为空列表）
+                        List<String> imagePaths = currentUser.getList("imagePaths");
+                        if (imagePaths == null) {
+                            imagePaths = new ArrayList<>();
+                        }
+
+                        // 将新上传的文件 URL 添加到 imagePaths 中
+                        imagePaths.add(lcFile.getUrl());
+
+                        // 更新用户对象的 imagePaths 字段
+                        currentUser.put("imagePaths", imagePaths);
+
+                        // 保存更新后的用户对象
+                        currentUser.saveInBackground().subscribe(
+                                new Observer<LCObject>() {
+
+                                    @Override
+                                    public void onSubscribe(Disposable d) {
+                                        
+                                    }
+
+                                    @Override
+                                    public void onNext(LCObject lcObject) {
+                                        Log.d(TAG, "User imagePaths updated.");
+                                        Toast.makeText(getContext(), "文件 URL 已添加到用户资料中", Toast.LENGTH_SHORT).show();
+                                    }
+
+                                    @Override
+                                    public void onError(Throwable e) {
+                                        // 更新失败
+                                        Log.e(TAG, "Failed to update user imagePaths", e);
+                                        Toast.makeText(getContext(), "更新用户资料失败", Toast.LENGTH_SHORT).show();
+                                    }
+
+                                    @Override
+                                    public void onComplete() {
+
+                                    }
+                                }
+                        );
+                    }
+
+
+                    mDownloadUrl = Uri.parse(lcFile.getUrl());  // 获取上传后的文件 URL
+                    Toast.makeText(getContext(), "文件上传成功", Toast.LENGTH_SHORT).show();
+                    updateUI(currentUser);
+                    // 你可以在这里保存文件的 URL 或进行其他操作
+                }
+
+                @Override
+                public void onError(Throwable e) {
+                    // 上传失败的处理
+                    Log.e(TAG, "File upload failed", e);
+                    Toast.makeText(getContext(), "文件上传失败", Toast.LENGTH_SHORT).show();
+                }
+
+                @Override
+                public void onComplete() {
+                    // 上传完成后的处理
+                }
+            });
+        } catch (Exception e) {
+            // 捕获转换和上传过程中可能的异常
+            Log.e(TAG, "Error uploading bitmap", e);
+            Toast.makeText(getContext(), "文件上传失败", Toast.LENGTH_SHORT).show();
+        }
+    }
+
 
     /**
-     * Handles the result intent from the upload service
+     * Starts the upload process from the given URI (LeanCloud)
      */
-    private void onUploadResultIntent(Intent intent){
-        // Got a new intent from MyUploadService with a success or failure
-        mDownloadUrl = intent.getParcelableExtra(MyUploadService.EXTRA_DOWNLOAD_URL);
-        mFileUri = intent.getParcelableExtra(MyUploadService.EXTRA_FILE_URI_RESULT);
+    public void uploadFromUri(Uri fileUri) {
+        try {
+            InputStream inputStream = requireContext().getContentResolver().openInputStream(fileUri);
+            assert inputStream != null;
+            byte[] data = IOUtils.toByteArray(inputStream);  // 使用 IOUtils 或手动读取 InputStream
+            LCFile lcFile = new LCFile("uploaded_file.jpg", data);
 
-        updateUI(mAuth.getCurrentUser());
+            lcFile.saveInBackground().subscribe(new Observer<LCFile>() {
+                @Override
+                public void onSubscribe(Disposable d) {}
+                @Override
+                public void onNext(LCFile lcFile) {
+                    // 上传成功
+                    Log.d(TAG, "File uploaded: " + lcFile.getUrl() + lcFile.getObjectId());
+                    mDownloadUrl = Uri.parse(lcFile.getUrl());
+                    Toast.makeText(getContext(), "文件上传成功", Toast.LENGTH_SHORT).show();
+                    // 保存下载 URL 或进行其他操作
+                }
+                @Override
+                public void onError(Throwable e) {
+                    Log.e(TAG, "File upload failed", e);
+                    Toast.makeText(getContext(), "文件上传失败", Toast.LENGTH_SHORT).show();
+                }
+                @Override
+                public void onComplete() {}
+            });
+        } catch (IOException e) {
+            Log.e(TAG, "Error reading file input stream", e);
+        }
     }
 
     /**
-     * Updates the UI based on the user's authentication state
+     * 将上传得到的 fileUrl 保存到当前用户的 imagePaths 字段
      */
-    private void updateUI(FirebaseUser user){
-        // Update UI based on user login state
-        if(user != null){
-            binding.layoutStorage.setVisibility(View.VISIBLE);
-        }
-        else{
-            binding.layoutStorage.setVisibility(View.GONE);
-        }
-
-        // Initialize ViewPager2
-        ViewPager2 viewPager = binding.viewPager;
-        // Initialize adapter with empty list
-        ImageAdapter adapter = new ImageAdapter(requireContext(), new ArrayList<>());
-        viewPager.setAdapter(adapter);
-
-        // If user is logged in, fetch user image paths
-        if(user != null){
-            Log.i(TAG, "updateUI: user");
-            fetchUserImagePaths();
-        }
-    }
-
-    /**
-     * Fetches the current user's image paths from Firestore and loads them into ViewPager2
-     */
-//   TODO: 改成用传到该页面的的参数访问数据
-    private void fetchUserImagePaths(){
-        FirebaseUser user = mAuth.getCurrentUser();
-        if(user == null){
-            Log.w(TAG, "fetchUserImagePaths: user is null");
+    private void saveImageUrlToUser(String fileUrl) {
+        LCUser currentUser = LCUser.getCurrentUser();
+        if (currentUser == null) {
+            Log.e(TAG, "saveImageUrlToUser: no user logged in");
+            hideProgressBar();
             return;
         }
 
-        String userId = user.getUid();
+        String userId = currentUser.getObjectId();
+        // 你可以直接在 LCUser 对象里保存，也可以有独立的 User 表
+        // 这里示例：把 imagePaths 存在 LCUser 的 Array 字段里
+        currentUser.addUnique("imagePaths", fileUrl);
 
-        FirebaseFirestore db = FirebaseFirestore.getInstance();
-        DocumentReference userDocRef = db.collection("users").document(userId);
-
-        // Fetch the user document
-        userDocRef.get()
-                .addOnSuccessListener(new OnSuccessListener<DocumentSnapshot>() {
-                    @Override
-                    public void onSuccess(DocumentSnapshot documentSnapshot){
-                        if(documentSnapshot.exists()){
-                            imagePaths = (List<String>) documentSnapshot.get("imagePaths");
-                            if(imagePaths != null && !imagePaths.isEmpty()){
-                                // Fetch download URLs
-                                Log.i(TAG, "fetchUserImagePaths: "+imagePaths);
-                                fetchDownloadUrls();
-                            }
-                            else{
-                                Log.d(TAG, "No image paths found for user.");
-                                Toast.makeText(getContext(), "没有找到上传的图片", Toast.LENGTH_SHORT).show();
-                                // Clear ViewPager2
-                                ViewPager2 viewPager = binding.viewPager;
-                                ImageAdapter adapter = (ImageAdapter) viewPager.getAdapter();
-                                if(adapter != null){
-                                    adapter.setImageUrls(new ArrayList<>());
-                                }
-                            }
-                        }
-                        else{
-                            Log.d(TAG, "User document does not exist.");
-                            Toast.makeText(getContext(), "用户文档不存在", Toast.LENGTH_SHORT).show();
-                        }
-                    }
-                })
-                .addOnFailureListener(new OnFailureListener(){
-                    @Override
-                    public void onFailure(@NonNull Exception e){
-                        Log.e(TAG, "Error fetching user document", e);
-                        Toast.makeText(getContext(), "获取用户数据失败", Toast.LENGTH_SHORT).show();
-                    }
-                });
+        currentUser.saveInBackground().subscribe(new Observer<LCObject>() {
+            @Override
+            public void onSubscribe(Disposable d) {}
+            @Override
+            public void onNext(LCObject lcObject) {
+                Log.d(TAG, "Image URL saved to user: " + fileUrl);
+                // 刷新列表
+                fetchUserImagePaths();
+            }
+            @Override
+            public void onError(Throwable e) {
+                hideProgressBar();
+                Log.e(TAG, "Failed to save image URL", e);
+                Toast.makeText(getContext(), "保存图片信息失败", Toast.LENGTH_SHORT).show();
+            }
+            @Override
+            public void onComplete() {}
+        });
     }
 
     /**
-     * Fetches download URLs from Firebase Storage based on the image paths
+     * Fetches the current user's image paths from LeanCloud and loads them into ViewPager2
      */
-    private void fetchDownloadUrls(){
-        FirebaseStorage storage = FirebaseStorage.getInstance();
-//        List<String> downloadUrls = new ArrayList<>();
-        int total = imagePaths.size();
-        final int[] count = {0};
-
-        for(String path : imagePaths){
-            StorageReference storageRef = storage.getReference().child(path);
-            storageRef.getDownloadUrl()
-                    .addOnSuccessListener(new OnSuccessListener<Uri>(){
-                        @Override
-                        public void onSuccess(Uri uri){
-                            downloadUrls.add(uri.toString());
-                            count[0]++;
-                            if(count[0] == total){
-                                // All download URLs fetched, update ViewPager2
-                                updateViewPager();
-                            }
-                        }
-                    })
-                    .addOnFailureListener(new OnFailureListener(){
-                        @Override
-                        public void onFailure(@NonNull Exception e){
-                            Log.e(TAG, "Failed to get download URL for path: " + path, e);
-                            count[0]++;
-                            if(count[0] == total){
-                                // All download URLs fetched, update ViewPager2
-                                updateViewPager();
-                            }
-                        }
-                    });
+    private void fetchUserImagePaths() {
+        LCUser currentUser = LCUser.getCurrentUser();
+        if (currentUser == null) {
+            Log.w(TAG, "fetchUserImagePaths: user is null");
+            hideProgressBar();
+            return;
         }
+
+        // 重新查询最新的用户数据
+        currentUser.fetchInBackground().subscribe(new Observer<LCObject>() {
+            @Override
+            public void onSubscribe(Disposable d) {}
+
+            @Override
+            public void onNext(LCObject lcObject) {
+                // 成功获取最新的用户数据
+                List<String> paths = lcObject.getList("imagePaths");
+                if (paths != null && !paths.isEmpty()) {
+                    Log.i(TAG, "fetchUserImagePaths: " + paths);
+                    imagePaths = paths;
+                    // 这一步其实 LeanCloud 就直接给了 URL，无需再次“下载URL”
+                    // 你可以直接用 imagePaths 作为下载URL
+                    downloadUrls.clear();
+                    downloadUrls.addAll(imagePaths);
+                    updateViewPager(downloadUrls);
+                } else {
+                    Log.d(TAG, "No image paths found for user.");
+                    imagePaths.clear();
+                    downloadUrls.clear();
+                    updateViewPager(downloadUrls);
+                }
+                hideProgressBar();
+            }
+
+            @Override
+            public void onError(Throwable e) {
+                Log.e(TAG, "Error fetching user data", e);
+                hideProgressBar();
+                Toast.makeText(getContext(), "获取用户数据失败", Toast.LENGTH_SHORT).show();
+            }
+
+            @Override
+            public void onComplete() {}
+        });
     }
 
     /**
      * Updates ViewPager2 with the list of image download URLs
      */
-    private void updateViewPager(){
-        Log.i(TAG, "updateViewPager: "+downloadUrls);
+    private void updateViewPager(List<String> urls) {
+        Log.i(TAG, "updateViewPager: " + urls);
         ViewPager2 viewPager = binding.viewPager;
         ImageAdapter adapter = (ImageAdapter) viewPager.getAdapter();
-        if(adapter != null){
-            adapter.setImageUrls(downloadUrls);
-            Log.i(TAG, "updateViewPager: success");
+        if (adapter != null) {
+            adapter.setImageUrls(urls);
             binding.layoutDownload.setVisibility(View.VISIBLE);
+            binding.layoutChoosePhoto.setVisibility(View.VISIBLE);
         }
-    }
-
-    /**
-     * Shows a message dialog with the given title and message
-     */
-    private void showMessageDialog(String title, String message){
-        AlertDialog ad = new AlertDialog.Builder(requireContext())
-                .setTitle(title)
-                .setMessage(message)
-                .create();
-        ad.show();
     }
 
     /**
@@ -481,25 +525,33 @@ public class UploadFragment extends Fragment implements View.OnClickListener {
      * Requests notification permission for Android 13+
      */
     private void askNotificationPermission(){
-        // This is only necessary for API level >= 33 (TIRAMISU)
         if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU){
-            if(ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.POST_NOTIFICATIONS) ==
-                    PackageManager.PERMISSION_GRANTED){
+            if(ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.POST_NOTIFICATIONS)
+                    == PackageManager.PERMISSION_GRANTED){
                 // Your app can post notifications.
-            }
-            else{
-                // Directly ask for the permission
+            } else {
+                // Request permission
                 requestPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS);
             }
         }
     }
 
-//    @Override
-//    public boolean onCreateOptionsMenu(Menu menu){
-//        // If using a toolbar, you can inflate menu here
-//        // getActivity().getMenuInflater().inflate(R.menu.menu_main, menu);
-//        return true;
-//    }
+    /**
+     * Updates the UI based on the user's authentication state (LeanCloud)
+     */
+    private void updateUI(LCUser user){
+        binding.layoutStorage.setVisibility(View.VISIBLE);
+        fetchUserImagePaths();
+        if (user != null) {
+            // 用户已登录
+            binding.layoutStorage.setVisibility(View.VISIBLE);
+            // 获取该用户的图片
+            fetchUserImagePaths();
+        } else {
+            Log.i(TAG, "updateUI: failed");
+            binding.layoutStorage.setVisibility(View.GONE);
+        }
+    }
 
     @Override
     public void onClick(View v){
@@ -511,12 +563,8 @@ public class UploadFragment extends Fragment implements View.OnClickListener {
                 throw new RuntimeException(e);
             }
         }
-        else if(i == R.id.button_choose){
-//            signInAnonymously();
-            Log.i(TAG, "onClick: button_choose");
-        }
-        else if(i == R.id.buttonDownload){
-            beginDownload();
-        }
+        // 你可以给其他按钮增加逻辑
+        // else if (i == R.id.buttonChoose) {...}
+        // else if (i == R.id.buttonDownload) {...}
     }
 }

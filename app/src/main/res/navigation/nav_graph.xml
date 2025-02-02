@@ -23,9 +23,9 @@
         <action
             android:id="@+id/action_mainFragment_to_calendar"
             app:destination="@id/uploadFragment" />
-        <action
-            android:id="@+id/action_mainFragment_to_firebase"
-            app:destination="@id/firebaseFragment" />
+<!--        <action-->
+<!--            android:id="@+id/action_mainFragment_to_firebase"-->
+<!--            app:destination="@id/firebaseFragment" />-->
         <action
             android:id="@+id/action_mainFragment_to_deviceList"
             app:destination="@+id/deviceListFragment" />
@@ -59,11 +59,11 @@
         </action>
     </fragment>
 
-    <fragment
-        android:id="@+id/firebaseFragment"
-        android:name="com.example.aura_demo.FirebaseFragment"
-        tools:layout="@layout/fragment_firebase">
-    </fragment>
+<!--    <fragment-->
+<!--        android:id="@+id/firebaseFragment"-->
+<!--        android:name="com.example.aura_demo.FirebaseFragment"-->
+<!--        tools:layout="@layout/fragment_firebase">-->
+<!--    </fragment>-->
 
     <fragment
         android:id="@+id/uploadFragment"
