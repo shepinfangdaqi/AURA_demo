@@ -173,6 +173,8 @@ public class LoginFragment extends BaseFragment {
             // 如果用户登录成功，跳转到用户资料页面
             NavHostFragment.findNavController(this)
                     .navigate(R.id.action_emailPasswordFragment_to_userProfileFragment);
+//            NavHostFragment.findNavController(this)
+//                    .navigate(R.id.action_loginFragment_to_deviceList);
         } else {
             // 如果用户未登录，更新 UI 状态
             mBinding.status.setText(R.string.signed_out);

@@ -7,22 +7,41 @@ public class Device {
     private String status;
     private String mode;
     private String frequency;
+    private String deviceId;
+
+    private String hengshu;
+
+    private String timeZone;
 
     // 空构造函数（Firebase 需要）
     public Device() {
     }
 
-    public Device(String iconUrl, String status, String mode, String frequency) {
+    public Device(String iconUrl, String status, String mode, String frequency, String deviceId, String hengshu,String timeZone) {
         this.iconUrl = iconUrl;
         this.status = status;
         this.mode = mode;
         this.frequency = frequency;
+        this.deviceId = deviceId;
+        this.hengshu = hengshu;
+        this.timeZone = timeZone;
+    }
+    public String gettimeZone() {
+        return timeZone;
+    }
+
+    public void settimeZone(String timeZone) {
+        this.timeZone = timeZone;
     }
 
     // Getter 和 Setter
     public String getIconUrl() {
         return iconUrl;
     }
+
+    public String getDeviceId(){return deviceId;}
+
+    public void setDeviceId(String deviceId){this.deviceId = deviceId;}
 
     public void setIconUrl(String iconUrl) {
         this.iconUrl = iconUrl;
@@ -50,5 +69,12 @@ public class Device {
 
     public void setFrequency(String frequency) {
         this.frequency = frequency;
+    }
+
+    public String getHengshu() {
+        return hengshu;
+    }
+    public void setHengshu(String hengshu) {
+        this.hengshu = hengshu;
     }
 }

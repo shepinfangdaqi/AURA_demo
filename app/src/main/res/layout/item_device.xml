@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/cardViewDevice"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
@@ -20,9 +21,9 @@
         <!-- 设备图标 -->
         <ImageView
             android:id="@+id/imageViewIcon"
-            android:layout_width="48dp"
-            android:layout_height="48dp"
-            android:src="@drawable/image1"/><!-- 替换为实际图标 -->
+            android:layout_width="58dp"
+            android:layout_height="79dp"
+            android:src="@drawable/image1" /><!-- 替换为实际图标 -->
 <!--        android:contentDescription="Device Icon"-->
 <!--        android:tint="?attr/colorPrimary" />-->
 
@@ -61,14 +62,24 @@
                 android:textSize="16sp"
                 android:textColor="@android:color/black" />
 
+            <!-- Frequency -->
+            <TextView
+                android:id="@+id/textViewHengshu"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="横竖: 横屏"
+                android:textColor="@android:color/black"
+                android:textSize="16sp" />
+
         </LinearLayout>
 
         <!-- 三个点的按钮 -->
+
         <ImageButton
             android:id="@+id/buttonMore"
             android:layout_width="wrap_content"
-            android:layout_height="49dp"
-            android:layout_marginStart="80dp"
+            android:layout_height="66dp"
+            android:layout_marginStart="8dp"
 
             android:contentDescription="@string/menu_options"
             android:src="@drawable/pencil"

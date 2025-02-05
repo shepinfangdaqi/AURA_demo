@@ -39,9 +39,20 @@ import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.TimeZone;
 
+import cn.leancloud.LCUser;
+import io.reactivex.Observer;
+import io.reactivex.disposables.Disposable;
 import pub.devrel.easypermissions.AppSettingsDialog;
 import pub.devrel.easypermissions.EasyPermissions;
+
+import cn.leancloud.LCObject;
+import cn.leancloud.LCQuery;
+import cn.leancloud.LCException;
+import cn.leancloud.callback.LCCallback;
+//import cn.leancloud.callback.LCFindCallback;
+//import cn.leancloud.callback.LCBooleanResultCallback;
 
 public class MainBLUEFragment extends Fragment implements EasyPermissions.PermissionCallbacks {
 
@@ -201,18 +212,43 @@ public class MainBLUEFragment extends Fragment implements EasyPermissions.Permis
         listView.setAdapter(listViewAdapter);
         listView.setOnItemClickListener((AdapterView<?> adapterView, View view1, int i, long l) -> {
             showConnectDialog();
+
             DeviceInfo deviceInfo = (DeviceInfo) listView.getItemAtPosition(i);
             ECBLE.onBLEConnectionStateChange((boolean ok, int errCode, String errMsg) -> {
                 if (getActivity() != null) {
                     getActivity().runOnUiThread(() -> {
+                        try {
+                            Thread.sleep(1500);  // 暂停3秒
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
                         hideConnectDialog();
                         if (ok) {
+
                             // ECBLE.stopBluetoothDevicesDiscovery(getContext());
                             // 启动 DeviceActivity
 //                            Intent intent = new Intent(requireContext(), DeviceActivity.class);
 //                            startActivity(intent);
+                            send("AT_ID?\r\n");  // 向设备发送命令
+                            ECBLE.onBLECharacteristicValueChange((String str, String strHex) -> {
+                                String id = str.substring(6,18); // 从索引 6 开始直到字符串末尾
+                                Log.i("Extracted ID", id);
 
-                            Navigation.findNavController(requireView()).navigate(R.id.action_mainBLUEFragment_to_deviceList);
+                                add_user_device(id);
+
+                                add_device(id);
+
+                                // 更新 UI 和导航
+                                Log.i("DeviceActivity", "Context is: " + requireContext());
+//                                requireActivity().runOnUiThread(() -> {
+//                                    // Show Toast on the main thread
+//                                    Toast.makeText(requireContext(), "add device: " + str, Toast.LENGTH_SHORT).show();
+//                                    Navigation.findNavController(requireView()).navigate(R.id.action_mainBLUEFragment_to_deviceList);
+//                                });
+                            });
+
+//                            Navigation.findNavController(requireView()).navigate(R.id.action_mainBLUEFragment_to_deviceList);
+//                            Navigation.findNavController(requireView()).navigate(R.id.action_mainBLUEFragment_to_wifi_connect);
                             if (getActivity() != null) {
                                 getActivity().overridePendingTransition(R.anim.jump_enter_anim, R.anim.jump_exit_anim);
                             }
@@ -228,6 +264,10 @@ public class MainBLUEFragment extends Fragment implements EasyPermissions.Permis
         });
         listRefresh();
     }
+    public void send(String data){
+        Log.i(TAG, "send data: "+data);
+        ECBLE.writeBLECharacteristicValue(data, false);
+    }
 
     void listRefresh() {
         new Handler().postDelayed(() -> {
@@ -241,6 +281,191 @@ public class MainBLUEFragment extends Fragment implements EasyPermissions.Permis
             listRefresh();
         }, 400);
     }
+
+    void add_user_device(String id) {
+        LCUser currentUser = LCUser.getCurrentUser();
+        if (currentUser != null) {
+            // 获取用户的 deviceId 字段（如果没有则初始化为空列表）
+            List<String> deviceIds = currentUser.getList("deviceId");
+            if (deviceIds == null) {
+                deviceIds = new ArrayList<>();
+            }
+
+            // 检查 deviceId 中是否已包含 id
+            if (!deviceIds.contains(id)) {
+                // 如果没有，添加 id
+                deviceIds.add(id);
+
+                // 更新用户对象的 deviceId 字段
+                currentUser.put("deviceId", deviceIds);
+
+                // 保存更新后的用户对象
+                currentUser.saveInBackground().subscribe(
+                        new Observer<LCObject>() {
+
+                            @Override
+                            public void onSubscribe(Disposable d) {
+                            }
+
+                            @Override
+                            public void onNext(LCObject lcObject) {
+                                Log.d(TAG, "User deviceId updated.");
+                                // 确保 Toast 在主线程中调用
+                                getActivity().runOnUiThread(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        Toast.makeText(getContext(), "设备 ID 已添加到用户资料中", Toast.LENGTH_SHORT).show();
+                                    }
+                                });
+                            }
+
+                            @Override
+                            public void onError(Throwable e) {
+                                // 更新失败
+                                Log.e(TAG, "Failed to update user deviceId", e);
+                                // 确保 Toast 在主线程中调用
+                                getActivity().runOnUiThread(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        Toast.makeText(getContext(), "更新用户资料失败", Toast.LENGTH_SHORT).show();
+                                    }
+                                });
+                            }
+
+                            @Override
+                            public void onComplete() {
+                            }
+                        }
+                );
+            } else {
+                // deviceId 中已包含 id
+                getActivity().runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        Toast.makeText(getContext(), "该设备 ID 已存在", Toast.LENGTH_SHORT).show();
+                    }
+                });
+            }
+        }
+    }
+
+
+    public static String getTimeZoneOffset() {
+        // 获取设备的默认时区
+        TimeZone timeZone = TimeZone.getDefault();
+
+        // 获取时区与UTC的偏差，以毫秒为单位
+        int offsetInMillis = timeZone.getOffset(System.currentTimeMillis());
+
+        // 转换为小时和分钟
+        int offsetInHours = offsetInMillis / (1000 * 60 * 60);
+        int offsetInMinutes = (offsetInMillis % (1000 * 60 * 60)) / (1000 * 60);
+
+        // 格式化为 "UTC+08:00" 或 "UTC-05:00" 的格式
+        String offset = String.format("UTC%+03d:%02d", offsetInHours, offsetInMinutes);
+
+        return offset;
+    }
+    void add_device(String id) {
+        // 首先查询 Device 表中是否已存在该 deviceId
+        LCQuery<LCObject> query = new LCQuery<>("Device");
+        query.whereEqualTo("deviceId", id);
+
+        query.findInBackground().subscribe(
+                new Observer<List<LCObject>>() {
+
+                    @Override
+                    public void onSubscribe(Disposable d) {
+                    }
+
+                    @Override
+                    public void onNext(List<LCObject> devices) {
+                        if (devices.isEmpty()) {
+                            // 如果不存在该 deviceId，创建一个新的 LCObject
+                            LCObject deviceObject = new LCObject("Device");
+                            String timeZoneOffset = getTimeZoneOffset();
+
+                            // 设置新对象的属性
+                            deviceObject.put("deviceId", id);
+                            deviceObject.put("mode", "每日精选");
+                            deviceObject.put("deviceFrequency", "1h");
+                            deviceObject.put("status", "在线");
+                            deviceObject.put("hengshu", "横屏");
+                            deviceObject.put("timeZone", timeZoneOffset);
+
+                            // 保存新设备到 Device 表
+                            deviceObject.saveInBackground().subscribe(
+                                    new Observer<LCObject>() {
+
+                                        @Override
+                                        public void onSubscribe(Disposable d) {
+                                        }
+
+                                        @Override
+                                        public void onNext(LCObject lcObject) {
+                                            Log.d(TAG, "New device added to Device table.");
+                                            // 确保 Toast 在主线程中调用
+                                            getActivity().runOnUiThread(new Runnable() {
+                                                @Override
+                                                public void run() {
+                                                    Toast.makeText(getContext(), "设备已添加到设备表中", Toast.LENGTH_SHORT).show();
+                                                }
+                                            });
+                                        }
+
+                                        @Override
+                                        public void onError(Throwable e) {
+                                            Log.e(TAG, "Failed to add new device", e);
+                                            // 确保 Toast 在主线程中调用
+                                            getActivity().runOnUiThread(new Runnable() {
+                                                @Override
+                                                public void run() {
+                                                    Toast.makeText(getContext(), "添加设备失败", Toast.LENGTH_SHORT).show();
+                                                }
+                                            });
+                                        }
+
+                                        @Override
+                                        public void onComplete() {
+                                        }
+                                    }
+                            );
+                        } else {
+                            // 如果 deviceId 已存在
+                            getActivity().runOnUiThread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    Toast.makeText(getContext(), "该设备 ID 已存在", Toast.LENGTH_SHORT).show();
+                                }
+                            });
+                        }
+
+                    }
+
+                    @Override
+                    public void onError(Throwable e) {
+                        Log.e(TAG, "Query failed", e);
+                        // 确保 Toast 在主线程中调用
+                        getActivity().runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                Toast.makeText(getContext(), "查询失败", Toast.LENGTH_SHORT).show();
+                            }
+                        });
+                    }
+
+                    @Override
+                    public void onComplete() {
+                        requireActivity().runOnUiThread(() -> {
+                            // Show Toast on the main thread
+//                            Toast.makeText(requireContext(), "add device: " + str, Toast.LENGTH_SHORT).show();
+                            Navigation.findNavController(requireView()).navigate(R.id.action_mainBLUEFragment_to_deviceList);
+                        });
+                    }
+                }
+        );
+    }
+
 
     void showAlert(String title, String content, Runnable callback) {
         if (getContext() != null) {

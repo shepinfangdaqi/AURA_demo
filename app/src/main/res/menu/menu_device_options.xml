@@ -9,4 +9,13 @@
     <item
         android:id="@+id/action_custom_image"
         android:title="自选图片" />
+    <item
+        android:id="@+id/action_custom_hv_choose"
+        android:title="横竖切换" />
+    <item
+        android:id="@+id/action_time"
+        android:title="设置频率" />
+    <item
+        android:id="@+id/action_wifi"
+        android:title="设置wifi" />
 </menu>

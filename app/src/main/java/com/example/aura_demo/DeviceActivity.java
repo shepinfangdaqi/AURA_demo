@@ -124,7 +124,7 @@ public class DeviceActivity extends AppCompatActivity {
         }));
         ECBLE.onBLECharacteristicValueChange((String str, String strHex) -> {
             // 更新 ViewModel
-            Log.i("DeviceActivity", "onCreate: "+str);
+            Log.i("DeviceActivity11111111", "onCreate: "+str);
         });
 //        ECBLE.onBLECharacteristicValueChange((String str,String strHex)-> runOnUiThread(()->{
 //            @SuppressLint("SimpleDateFormat") String timeStr = new SimpleDateFormat("[HH:mm:ss,SSS]: ").format(new Date(System.currentTimeMillis()));

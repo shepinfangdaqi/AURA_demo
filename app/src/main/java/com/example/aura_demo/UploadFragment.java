@@ -5,6 +5,7 @@ import static android.app.Activity.RESULT_OK;
 import android.Manifest;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.graphics.Bitmap;
@@ -16,6 +17,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.Toast;
 
 import androidx.activity.result.ActivityResultLauncher;
@@ -47,11 +49,15 @@ import cn.leancloud.LCUser;
 import cn.leancloud.callback.FindCallback;
 import cn.leancloud.callback.GetDataCallback;
 import cn.leancloud.callback.SaveCallback;
+import cn.leancloud.types.LCNull;
 import io.reactivex.Observer;
 import io.reactivex.disposables.Disposable;
 
 import com.yalantis.ucrop.UCrop;
 import com.yalantis.ucrop.UCrop.Options;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 //import com.theartofdev.edmodo.cropper.CropImage;
 //import com.theartofdev.edmodo.cropper.CropImageView;
 
@@ -66,6 +72,7 @@ public class UploadFragment extends Fragment implements View.OnClickListener {
 
     private static final String KEY_FILE_URI = "key_file_uri";
     private static final String KEY_DOWNLOAD_URL = "key_download_url";
+    private static final Logger log = LoggerFactory.getLogger(UploadFragment.class);
 
     private FragmentUploadBinding binding;
 
@@ -74,12 +81,18 @@ public class UploadFragment extends Fragment implements View.OnClickListener {
     // 上传后获得的下载地址
     private Uri mDownloadUrl = null;
 
+    private String currentUrl = "";
+
     // 用于存储用户图片的地址列表
     private List<String> imagePaths = new ArrayList<>();
     private List<String> downloadUrls = new ArrayList<>();
 
     // 向系统选择图片的 ActivityResultLauncher
     private ActivityResultLauncher<String[]> intentLauncher;
+
+    private String deviceId;
+
+    private boolean isPortrait = true;  // 默认纵向裁剪
 
     // 请求通知权限（仅示例）
     private final ActivityResultLauncher<String> requestPermissionLauncher =
@@ -113,14 +126,21 @@ public class UploadFragment extends Fragment implements View.OnClickListener {
         // 点击按钮：选择本地图片
         binding.buttonCamera.setOnClickListener(this);
 
+        binding.buttonChoose.setOnClickListener(this);
+
+        binding.buttonToggleOrientation.setOnClickListener(this);
+
+        binding.buttonDelete.setOnClickListener(this);
+
         // 当 ViewPager2 翻页时，可处理回调
         binding.viewPager.registerOnPageChangeCallback(new ViewPager2.OnPageChangeCallback(){
             @Override
             public void onPageSelected(int position){
                 super.onPageSelected(position);
                 if (position >= 0 && position < downloadUrls.size()) {
-                    String currentUri = downloadUrls.get(position);
-                    Log.d(TAG, "页面切换到位置 " + position + ", 图片 URI: " + currentUri);
+
+                    currentUrl = downloadUrls.get(position);
+                    Log.d(TAG, "页面切换到位置 " + position + ", 图片 URI: " + currentUrl);
                 }
             }
         });
@@ -152,7 +172,7 @@ public class UploadFragment extends Fragment implements View.OnClickListener {
         Bundle args = getArguments();
         String type = "";
         if (args != null) {
-            String deviceId = args.getString("deviceId");
+            deviceId = args.getString("deviceId");
             String deviceName = args.getString("deviceName");
             type = args.getString("type");
             Log.d("UploadFragment", "Device ID: " + deviceId + ", Device Name: " + deviceName);
@@ -222,12 +242,24 @@ public class UploadFragment extends Fragment implements View.OnClickListener {
         // 创建目标裁剪的Uri
         Uri destinationUri = Uri.fromFile(new File(getActivity().getCacheDir(), "cropped_image.jpg"));
 
-        // 启动UCrop裁剪界面
-        UCrop.of(sourceUri, destinationUri)
-                .withAspectRatio(800, 480)  // 设置裁切框的比例
-                .withMaxResultSize(800, 480)  // 设置裁切后图片的最大尺寸
-                .start(getContext(), this);  // 启动裁剪活动
+        // 设置裁剪比例
+        if (isPortrait) {
+            // 默认纵向裁剪 800x480
+            UCrop.of(sourceUri, destinationUri)
+                    .withAspectRatio(800, 480)  // 设置裁切框的比例
+                    .withMaxResultSize(800, 480)  // 设置裁切后图片的最大尺寸
+                    .start(getContext(), this);  // 启动裁剪活动
+        } else {
+            // 切换为横向裁剪 480x800
+            UCrop.of(sourceUri, destinationUri)
+                    .withAspectRatio(480, 800)  // 设置裁切框的比例
+                    .withMaxResultSize(480, 800)  // 设置裁切后图片的最大尺寸
+                    .start(getContext(), this);  // 启动裁剪活动
+        }
     }
+
+
+
 
     // 处理裁剪结果
     @Override
@@ -244,10 +276,15 @@ public class UploadFragment extends Fragment implements View.OnClickListener {
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }
-
+                Bitmap scaledBitmap;
                 // 等比缩放图片到 800x480
-                Bitmap scaledBitmap = scaleBitmap(bitmap, 800, 481);
-
+                if(isPortrait){
+                     scaledBitmap = scaleBitmap(bitmap, 800, 480);
+                }
+//                Bitmap scaledBitmap = scaleBitmap(bitmap, 800, 481);
+                else {
+                     scaledBitmap = scaleBitmap(bitmap, 480, 800);
+                }
                 // 在这里上传或保存图片
                 uploadFromBitmap(scaledBitmap);
             }
@@ -303,6 +340,7 @@ public class UploadFragment extends Fragment implements View.OnClickListener {
                     // 获取当前登录的用户
                     LCUser currentUser = LCUser.getCurrentUser();
                     if (currentUser != null) {
+
                         // 获取用户的 imagePaths 字段（如果没有则初始化为空列表）
                         List<String> imagePaths = currentUser.getList("imagePaths");
                         if (imagePaths == null) {
@@ -371,6 +409,182 @@ public class UploadFragment extends Fragment implements View.OnClickListener {
         }
     }
 
+    public void deleteFile(String fileUrl) {
+        try {
+            showProgressBar(getString(R.string.progress_deleting));
+
+            // 获取当前登录的用户
+            LCUser currentUser = LCUser.getCurrentUser();
+            if (currentUser != null) {
+                // 获取用户的 imagePaths 字段（如果没有则初始化为空列表）
+                List<String> imagePaths = currentUser.getList("imagePaths");
+                if (imagePaths != null && imagePaths.contains(fileUrl)) {
+                    // 删除 imagePaths 中对应的 URL
+                    imagePaths.remove(fileUrl);
+
+                    // 更新用户对象的 imagePaths 字段
+                    currentUser.put("imagePaths", imagePaths);
+
+                    // 保存更新后的用户对象
+                    currentUser.saveInBackground().subscribe(new Observer<LCObject>() {
+                        @Override
+                        public void onSubscribe(Disposable d) {
+                            // 上传开始时的处理
+                        }
+
+                        @Override
+                        public void onNext(LCObject lcObject) {
+                            Log.d(TAG, "User imagePaths updated after deletion.");
+                            Toast.makeText(getContext(), "文件已从用户资料中移除", Toast.LENGTH_SHORT).show();
+                            updateUI(currentUser); // 更新 UI
+                        }
+
+                        @Override
+                        public void onError(Throwable e) {
+                            // 更新失败
+                            Log.e(TAG, "Failed to update user imagePaths after deletion", e);
+                            Toast.makeText(getContext(), "更新用户资料失败", Toast.LENGTH_SHORT).show();
+                        }
+
+                        @Override
+                        public void onComplete() {
+                            // 操作完成后的处理
+                        }
+                    });
+                } else {
+                    Log.w(TAG, "No matching URL found in user imagePaths.");
+                    Toast.makeText(getContext(), "文件 URL 不存在", Toast.LENGTH_SHORT).show();
+                }
+                Log.i(TAG, "deleteFile: "+fileUrl);
+                int startIndex = fileUrl.indexOf("lcfile.com/") + "lcfile.com/".length();
+                String key = fileUrl.substring(startIndex);
+
+                LCQuery<LCObject> query = new LCQuery<>("_File");
+                query.whereEqualTo("key", key );
+                query.findInBackground().subscribe(new Observer<List<LCObject>>() {
+                    public void onSubscribe(Disposable disposable) {}
+                    public void onNext(List<LCObject> students) {
+                        // students 是包含满足条件的 Student 对象的数组
+                        Log.i(TAG, "onNext: success" + students);
+                        String id = students.get(0).getObjectId();
+                        LCObject file = LCObject.createWithoutData("_File", id);
+                        file.deleteInBackground().subscribe(new Observer<LCNull>() {
+                            @Override
+                            public void onSubscribe(Disposable d) {
+                                // 删除开始时的处理
+                            }
+
+                            @Override
+                            public void onNext(LCNull response) {
+                                Log.d(TAG, "File deleted successfully: " + fileUrl);
+                                Toast.makeText(getContext(), "文件删除成功", Toast.LENGTH_SHORT).show();
+                                updateUI(currentUser); // 更新 UI
+                            }
+
+                            @Override
+                            public void onError(Throwable e) {
+                                // 删除失败
+                                Log.e(TAG, "File deletion failed", e);
+                                Toast.makeText(getContext(), "文件删除失败", Toast.LENGTH_SHORT).show();
+                            }
+
+                            @Override
+                            public void onComplete() {
+                                // 删除完成后的处理
+                            }
+                        });
+
+                    }
+                    public void onError(Throwable throwable) {}
+                    public void onComplete() {}
+                });
+//                int lastSlashIndex = fileUrl.lastIndexOf("/");  // 找到最后一个 / 的位置
+//                String fileName = fileUrl.substring(lastSlashIndex + 1);  // 从 / 后面提取字符串
+//                Log.i(TAG, "deleteFile: "+fileUrl+fileName);
+//
+//                // 通过 URL 删除文件
+//                LCFile fileToDelete = new LCFile(fileName, url);
+////                fileToDelete.remove(fileToDelete.getKey());
+//                String id = fileToDelete.getObjectId();
+//                Log.i(TAG, "deleteFile: name "+id);
+
+
+            } else {
+                Log.w(TAG, "No current user found");
+                Toast.makeText(getContext(), "用户未登录", Toast.LENGTH_SHORT).show();
+            }
+
+        } catch (Exception e) {
+            // 捕获删除过程中的异常
+            Log.e(TAG, "Error deleting file", e);
+            Toast.makeText(getContext(), "文件删除失败", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    public void changeMode(String id,String currentUrl){
+        // 创建查询对象，查找 Device 表中的 deviceId 字段
+        LCQuery<LCObject> query = new LCQuery<>("Device");
+        query.whereEqualTo("deviceId", id); // 使用 device.getDeviceId() 获取设备 ID
+
+        query.findInBackground().subscribe(new Observer<List<LCObject>>() {
+            @Override
+            public void onSubscribe(Disposable disposable) {
+                // 订阅开始时的操作
+            }
+
+            @Override
+            public void onNext(List<LCObject> devices) {
+                // 查找到满足条件的设备对象
+                if (!devices.isEmpty()) {
+                    // 假设查询返回的是一个设备列表，取第一个设备对象
+                    LCObject deviceObject = devices.get(0);
+
+                    // 修改 mode 字段
+                    deviceObject.put("currentUrl", currentUrl);  // 将 "新的模式" 替换为你想设置的值
+
+                    // 保存修改
+                    deviceObject.saveInBackground().subscribe(new Observer<LCObject>() {
+                        @Override
+                        public void onSubscribe(Disposable disposable) {
+                            // 处理保存时的操作
+                        }
+
+                        @Override
+                        public void onNext(LCObject lcObject) {
+                            // 成功保存后的操作
+                            Log.d("TAG", "Device mode updated successfully");
+//                            fetchDeviceList();
+                        }
+
+                        @Override
+                        public void onError(Throwable throwable) {
+                            // 保存失败时的操作
+                            Log.e("TAG", "Failed to update device mode", throwable);
+                        }
+
+                        @Override
+                        public void onComplete() {
+                            // 操作完成时的处理
+                        }
+                    });
+                } else {
+                    // 如果没有找到符合条件的设备
+                    Log.w("TAG", "No device found with the specified deviceId");
+                }
+            }
+
+            @Override
+            public void onError(Throwable throwable) {
+                // 查询失败时的处理
+                Log.e("TAG", "Failed to query devices", throwable);
+            }
+
+            @Override
+            public void onComplete() {
+                // 查询完成后的操作
+            }
+        });
+    }
 
     /**
      * Starts the upload process from the given URI (LeanCloud)
@@ -502,6 +716,8 @@ public class UploadFragment extends Fragment implements View.OnClickListener {
             adapter.setImageUrls(urls);
             binding.layoutDownload.setVisibility(View.VISIBLE);
             binding.layoutChoosePhoto.setVisibility(View.VISIBLE);
+            binding.layoutChoosehengshu.setVisibility(View.VISIBLE);
+            binding.layoutDelete.setVisibility(View.VISIBLE);
         }
     }
 
@@ -553,9 +769,36 @@ public class UploadFragment extends Fragment implements View.OnClickListener {
         }
     }
 
+    private void updataUrl(){
+        Log.i(TAG, "updataUrl: "+deviceId);
+        changeMode(deviceId,currentUrl);
+        Log.i(TAG, "updataUrl: "+currentUrl);
+
+    }
+
+    public void toggleOrientation() {
+        // 获取按钮
+        Button button = binding.buttonToggleOrientation;
+
+        // 切换方向
+        if (isPortrait) {
+            // 如果当前是竖屏，切换为横屏
+//            setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
+            button.setText("竖屏");  // 更新按钮文本为 "横屏"
+        } else {
+            // 如果当前是横屏，切换为竖屏
+//            setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
+            button.setText("横屏");  // 更新按钮文本为 "竖屏"
+        }
+
+        // 切换标志位
+        isPortrait = !isPortrait;
+    }
+
     @Override
     public void onClick(View v){
         int i = v.getId();
+        Log.i(TAG, "onClick: "+i);
         if(i == R.id.buttonCamera){
             try {
                 launchCamera();
@@ -563,8 +806,15 @@ public class UploadFragment extends Fragment implements View.OnClickListener {
                 throw new RuntimeException(e);
             }
         }
-        // 你可以给其他按钮增加逻辑
-        // else if (i == R.id.buttonChoose) {...}
+
+         else if (i == R.id.button_choose) {
+             Log.i(TAG, "onClick: choose");
+             updataUrl();
+         } else if (i == R.id.button_toggle_orientation) {
+             toggleOrientation();
+         }else if(i == R.id.button_delete){
+             deleteFile(currentUrl); //去掉http://
+        }
         // else if (i == R.id.buttonDownload) {...}
     }
 }

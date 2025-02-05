@@ -36,6 +36,7 @@
 
     <string name="progress_downloading">Downloading…</string>
     <string name="progress_uploading">Uploading…</string>
+    <string name="progress_deleting">Deleting…</string>
     <string name="progress_auth">Signing In…</string>
 
     <string name="upload_success">Upload finished</string>
@@ -51,6 +52,7 @@
     <string name="sign_in_prompt">Sign In to begin</string>
     <string name="take_photo_prompt">Upload your Photo</string>
     <string name="choose_photo">Choose your Photo</string>
+    <string name="choose_photo_hengshu">Choose Photo v h</string>
 
     <string name="rationale_storage">This sample reads images from your camera to demonstrate uploading.</string>
     <string name="label_link">Choose your picture</string>
@@ -58,5 +60,6 @@
     <string name="log_out">Log out</string>
     <string name="menu_options">choose mode\n</string>
     <string name="title_name">蓝牙连接</string>
+    <string name="wifi_title_name">Wi-Fi连接</string>
 
 </resources>

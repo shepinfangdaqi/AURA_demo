@@ -60,6 +60,8 @@ public class DeviceAdapter extends RecyclerView.Adapter<DeviceAdapter.DeviceView
         TextView textViewStatus;
         TextView textViewMode;
         TextView textViewFrequency;
+
+        TextView textViewHengshu;
         ImageView imageViewArrow;
 
         ImageButton buttonMore;
@@ -70,6 +72,7 @@ public class DeviceAdapter extends RecyclerView.Adapter<DeviceAdapter.DeviceView
             textViewStatus = itemView.findViewById(R.id.textViewStatus);
             textViewMode = itemView.findViewById(R.id.textViewMode);
             textViewFrequency = itemView.findViewById(R.id.textViewFrequency);
+            textViewHengshu = itemView.findViewById(R.id.textViewHengshu);
             buttonMore = itemView.findViewById(R.id.buttonMore);
 //            imageViewArrow = itemView.findViewById(R.id.imageViewArrow);
         }
@@ -88,6 +91,7 @@ public class DeviceAdapter extends RecyclerView.Adapter<DeviceAdapter.DeviceView
             textViewStatus.setText("状态: " + device.getStatus());
             textViewMode.setText("模式: " + device.getMode());
             textViewFrequency.setText("频率: " + device.getFrequency());
+            textViewHengshu.setText("横竖: " + device.getHengshu());
 
             // 设置点击事件
             itemView.setOnClickListener(new View.OnClickListener(){

@@ -129,6 +129,60 @@
 
             </LinearLayout>
 
+            <LinearLayout
+                android:id="@+id/layoutChoosehengshu"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal"
+                android:orientation="vertical"
+                android:visibility="invisible">
+
+                <TextView
+                    style="@style/TextAppearance.AppCompat.Medium"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_horizontal"
+                    android:layout_marginBottom="@dimen/margin_1"
+                    android:text="@string/choose_photo_hengshu" />
+
+                <Button
+                    android:id="@+id/button_toggle_orientation"
+                    android:layout_width="@dimen/standard_field_width"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_horizontal"
+                    android:text="竖屏"
+                    android:onClick="toggleOrientation"/>
+
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/layoutDelete"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal"
+                android:orientation="vertical"
+                android:visibility="invisible">
+
+                <TextView
+                    style="@style/TextAppearance.AppCompat.Medium"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_horizontal"
+                    android:layout_marginBottom="@dimen/margin_1"
+                    android:text="Delete this" />
+
+                <Button
+                    android:id="@+id/button_delete"
+                    android:layout_width="@dimen/standard_field_width"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_horizontal"
+                    android:text="Delete" />
+
+            </LinearLayout>
+
+
+
+
         </LinearLayout>
 
     </ScrollView>

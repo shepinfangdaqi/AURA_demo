@@ -14,6 +14,7 @@ import android.content.Context;
 import android.content.pm.PackageManager;
 import android.location.LocationManager;
 import android.os.Build;
+import android.os.Handler;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
@@ -283,6 +284,7 @@ public class ECBLE {
                             }
                             //write
                             if (characteristic.getUuid().toString().equals(ecCharacteristicWriteUUID)) {
+                                Log.i("onServicesDiscovered", "onServicesDiscovered: write");
                                 ecCharacteristicWrite = characteristic;
                             }
                         }
@@ -415,6 +417,28 @@ public class ECBLE {
                 byteArray = data.getBytes();
             }
         }
+        if (ecCharacteristicWrite == null) {
+            new Handler().postDelayed(() -> {
+                // 3秒后执行的操作
+                Log.i("sleep", "3 seconds have passed after sending the data.");
+                if (ecCharacteristicWrite != null) {
+                    ecCharacteristicWrite.setValue(byteArray);
+                    //设置回复形式
+                    ecCharacteristicWrite.setWriteType(BluetoothGattCharacteristic.WRITE_TYPE_NO_RESPONSE);
+                    //开始写数据
+                    if (bluetoothGatt != null) {
+                        bluetoothGatt.writeCharacteristic(ecCharacteristicWrite);
+                        Log.i("writeBLECharacteristicValue", "writeBLECharacteristicValue: success");
+                    }
+                    else{
+                        Log.e("writeBLECharacteristicValue","bluetoothGatt is null");
+                    }
+                }
+                else {
+                    Log.e("writeBLECharacteristicValue","ecCharacteristicWrite is null");
+                }
+            }, 1500);  // 3000毫秒即3秒
+        }
         if (ecCharacteristicWrite != null) {
             ecCharacteristicWrite.setValue(byteArray);
             //设置回复形式
@@ -422,7 +446,14 @@ public class ECBLE {
             //开始写数据
             if (bluetoothGatt != null) {
                 bluetoothGatt.writeCharacteristic(ecCharacteristicWrite);
+                Log.i("writeBLECharacteristicValue", "writeBLECharacteristicValue: success");
             }
+            else{
+                Log.e("writeBLECharacteristicValue","bluetoothGatt is null");
+            }
+        }
+        else {
+            Log.e("writeBLECharacteristicValue","ecCharacteristicWrite is null");
         }
     }
 
