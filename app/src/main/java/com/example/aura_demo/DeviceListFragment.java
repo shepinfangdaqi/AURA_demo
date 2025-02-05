@@ -409,37 +409,74 @@ public class DeviceListFragment extends Fragment {
 
     // Fetch the device list from LeanCloud
     private void fetchDeviceList() {
-        LCQuery<LCObject> query = new LCQuery<>("Device"); // Assuming the class name is "Device" in LeanCloud
-        query.findInBackground().subscribe(new Observer<List<LCObject>>() {
+        LCUser currentUser = LCUser.getCurrentUser();
+        if (currentUser == null) {
+            Log.w(TAG, "fetchUserImagePaths: user is null");
+            return;
+        }
+
+// 重新查询最新的用户数据
+        currentUser.fetchInBackground().subscribe(new Observer<LCObject>() {
             @Override
             public void onSubscribe(Disposable d) {}
 
-            @SuppressLint("NotifyDataSetChanged")
             @Override
-            public void onNext(List<LCObject> devices) {
-                deviceList.clear();
-                for (LCObject deviceObject : devices) {
-                    // Parse the device object and add it to the list
-                    Device device = new Device();
-                    device.setMode(deviceObject.getString("mode"));
-                    device.setFrequency(deviceObject.getString("deviceFrequency"));
-                    device.setStatus(deviceObject.getString("status"));
-                    device.setDeviceId(deviceObject.getString("deviceId"));
-                    device.setHengshu(deviceObject.getString("hengshu"));
-                    deviceList.add(device);
+            public void onNext(LCObject lcObject) {
+                // 成功获取最新的用户数据
+                List<String> deviceIds = lcObject.getList("deviceId");
+                if (deviceIds != null && !deviceIds.isEmpty()) {
+                    Log.i(TAG, "fetchUserImagePaths: " + deviceIds);
+
+                    // 通过 deviceIds 查询 Device 表
+                    LCQuery<LCObject> query = new LCQuery<>("Device");
+                    query.whereContainedIn("deviceId", deviceIds); // 根据用户的 deviceId 列表查询 Device 表
+                    query.findInBackground().subscribe(new Observer<List<LCObject>>() {
+                        @Override
+                        public void onSubscribe(Disposable d) {}
+
+                        @SuppressLint("NotifyDataSetChanged")
+                        @Override
+                        public void onNext(List<LCObject> devices) {
+                            deviceList.clear();
+                            for (LCObject deviceObject : devices) {
+                                // 解析设备对象并添加到列表
+                                Device device = new Device();
+                                device.setMode(deviceObject.getString("mode"));
+                                device.setFrequency(deviceObject.getString("deviceFrequency"));
+                                device.setStatus(deviceObject.getString("status"));
+                                device.setDeviceId(deviceObject.getString("deviceId"));
+                                device.setHengshu(deviceObject.getString("hengshu"));
+                                device.setPower(deviceObject.getString("power"));
+                                deviceList.add(device);
+                            }
+                            deviceAdapter.notifyDataSetChanged();
+                        }
+
+                        @Override
+                        public void onError(Throwable e) {
+                            Log.e(TAG, "Failed to fetch devices", e);
+                            Toast.makeText(getContext(), "Failed to fetch devices", Toast.LENGTH_SHORT).show();
+                        }
+
+                        @Override
+                        public void onComplete() {}
+                    });
+
+                } else {
+                    Log.d(TAG, "No device IDs found for user.");
                 }
-                deviceAdapter.notifyDataSetChanged();
             }
 
             @Override
             public void onError(Throwable e) {
-                Log.e(TAG, "Failed to fetch devices", e);
-                Toast.makeText(getContext(), "Failed to fetch devices", Toast.LENGTH_SHORT).show();
+                Log.e(TAG, "Error fetching user data", e);
+                Toast.makeText(getContext(), "获取用户数据失败", Toast.LENGTH_SHORT).show();
             }
 
             @Override
             public void onComplete() {}
         });
+
     }
 
     @Override

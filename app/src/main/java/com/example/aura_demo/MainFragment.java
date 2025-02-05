@@ -35,8 +35,8 @@ public class MainFragment extends Fragment {
         });
 
         // 按钮2：跳转到用户资料页面
-        Button buttonToProfile = view.findViewById(R.id.button_to_profile);
-        buttonToProfile.setOnClickListener(v -> navController.navigate(R.id.action_mainFragment_to_profileFragment));
+//        Button buttonToProfile = view.findViewById(R.id.button_to_profile);
+//        buttonToProfile.setOnClickListener(v -> navController.navigate(R.id.action_mainFragment_to_profileFragment));
 //        buttonToProfile.setOnClickListener(v -> {
 //            // 创建 Intent 来启动 UploadActivity
 //            Intent intent = new Intent(requireContext(), UploadActivity.class);
@@ -49,8 +49,8 @@ public class MainFragment extends Fragment {
 //        });
 
         // 按钮3：跳转到设置页面
-        Button buttonToSettings = view.findViewById(R.id.button_to_settings);
-        buttonToSettings.setOnClickListener(v -> navController.navigate(R.id.action_mainFragment_to_bluetoothFragment));
+//        Button buttonToSettings = view.findViewById(R.id.button_to_settings);
+//        buttonToSettings.setOnClickListener(v -> navController.navigate(R.id.action_mainFragment_to_bluetoothFragment));
 
         Button button_calendar = view.findViewById(R.id.button_calendar);
 //        button_calendar.setOnClickListener(v -> navController.navigate(R.id.action_mainFragment_to_firebase));

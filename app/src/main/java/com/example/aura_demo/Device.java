@@ -13,11 +13,13 @@ public class Device {
 
     private String timeZone;
 
+    private String power;
+
     // 空构造函数（Firebase 需要）
     public Device() {
     }
 
-    public Device(String iconUrl, String status, String mode, String frequency, String deviceId, String hengshu,String timeZone) {
+    public Device(String iconUrl, String status, String mode, String frequency, String deviceId, String hengshu,String timeZone,String power) {
         this.iconUrl = iconUrl;
         this.status = status;
         this.mode = mode;
@@ -25,6 +27,7 @@ public class Device {
         this.deviceId = deviceId;
         this.hengshu = hengshu;
         this.timeZone = timeZone;
+        this.power = power;
     }
     public String gettimeZone() {
         return timeZone;
@@ -76,5 +79,12 @@ public class Device {
     }
     public void setHengshu(String hengshu) {
         this.hengshu = hengshu;
+    }
+
+    public String getPower() {
+        return power;
+    }
+    public void setPower(String power) {
+        this.power = power;
     }
 }

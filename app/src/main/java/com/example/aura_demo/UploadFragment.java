@@ -3,11 +3,9 @@ package com.example.aura_demo;
 import static android.app.Activity.RESULT_OK;
 
 import android.Manifest;
-import android.content.Context;
+import android.annotation.SuppressLint;
 import android.content.Intent;
-import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
-import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Build;
@@ -37,24 +35,25 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
-import java.util.Locale;
-import java.util.Objects;
+import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
-import cn.leancloud.LCException;
+import cn.leancloud.LCCloud;
 import cn.leancloud.LCFile;
 import cn.leancloud.LCObject;
 import cn.leancloud.LCQuery;
 import cn.leancloud.LCUser;
-import cn.leancloud.callback.FindCallback;
-import cn.leancloud.callback.GetDataCallback;
-import cn.leancloud.callback.SaveCallback;
 import cn.leancloud.types.LCNull;
+import io.reactivex.Observable;
 import io.reactivex.Observer;
+import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.Disposable;
+import io.reactivex.schedulers.Schedulers;
 
 import com.yalantis.ucrop.UCrop;
-import com.yalantis.ucrop.UCrop.Options;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -383,7 +382,7 @@ public class UploadFragment extends Fragment implements View.OnClickListener {
                         );
                     }
 
-
+                    callCloudFunctionWithObservable(lcFile.getObjectId(),lcFile.getUrl());
                     mDownloadUrl = Uri.parse(lcFile.getUrl());  // 获取上传后的文件 URL
                     Toast.makeText(getContext(), "文件上传成功", Toast.LENGTH_SHORT).show();
                     updateUI(currentUser);
@@ -451,53 +450,14 @@ public class UploadFragment extends Fragment implements View.OnClickListener {
                             // 操作完成后的处理
                         }
                     });
+                    deleteFile_from_url(fileUrl); //删除图片文件
+                    findBinUrlByUrl(fileUrl,true); //删除bin文件
+                    deleteBinUrlByUrl(fileUrl);
                 } else {
                     Log.w(TAG, "No matching URL found in user imagePaths.");
                     Toast.makeText(getContext(), "文件 URL 不存在", Toast.LENGTH_SHORT).show();
                 }
-                Log.i(TAG, "deleteFile: "+fileUrl);
-                int startIndex = fileUrl.indexOf("lcfile.com/") + "lcfile.com/".length();
-                String key = fileUrl.substring(startIndex);
 
-                LCQuery<LCObject> query = new LCQuery<>("_File");
-                query.whereEqualTo("key", key );
-                query.findInBackground().subscribe(new Observer<List<LCObject>>() {
-                    public void onSubscribe(Disposable disposable) {}
-                    public void onNext(List<LCObject> students) {
-                        // students 是包含满足条件的 Student 对象的数组
-                        Log.i(TAG, "onNext: success" + students);
-                        String id = students.get(0).getObjectId();
-                        LCObject file = LCObject.createWithoutData("_File", id);
-                        file.deleteInBackground().subscribe(new Observer<LCNull>() {
-                            @Override
-                            public void onSubscribe(Disposable d) {
-                                // 删除开始时的处理
-                            }
-
-                            @Override
-                            public void onNext(LCNull response) {
-                                Log.d(TAG, "File deleted successfully: " + fileUrl);
-                                Toast.makeText(getContext(), "文件删除成功", Toast.LENGTH_SHORT).show();
-                                updateUI(currentUser); // 更新 UI
-                            }
-
-                            @Override
-                            public void onError(Throwable e) {
-                                // 删除失败
-                                Log.e(TAG, "File deletion failed", e);
-                                Toast.makeText(getContext(), "文件删除失败", Toast.LENGTH_SHORT).show();
-                            }
-
-                            @Override
-                            public void onComplete() {
-                                // 删除完成后的处理
-                            }
-                        });
-
-                    }
-                    public void onError(Throwable throwable) {}
-                    public void onComplete() {}
-                });
 //                int lastSlashIndex = fileUrl.lastIndexOf("/");  // 找到最后一个 / 的位置
 //                String fileName = fileUrl.substring(lastSlashIndex + 1);  // 从 / 后面提取字符串
 //                Log.i(TAG, "deleteFile: "+fileUrl+fileName);
@@ -521,7 +481,116 @@ public class UploadFragment extends Fragment implements View.OnClickListener {
         }
     }
 
-    public void changeMode(String id,String currentUrl){
+    public void deleteBinUrlByUrl(String url) {
+        try {
+            // 创建查询对象，查询 bin_url 表
+            LCQuery<LCObject> query = new LCQuery<>("bin_url");
+
+            // 根据 url 字段查找对应记录
+            query.whereEqualTo("url", url);
+
+            // 执行查询并删除记录
+            query.findInBackground().subscribe(new Observer<List<LCObject>>() {
+                @Override
+                public void onSubscribe(Disposable d) {}
+
+                @Override
+                public void onNext(List<LCObject> results) {
+                    if (results != null && !results.isEmpty()) {
+                        // 获取查询结果中的第一个对象
+                        LCObject binUrlObject = results.get(0);
+
+                        // 删除该记录
+                        binUrlObject.deleteInBackground().subscribe(new Observer<LCNull>() {
+                            @Override
+                            public void onSubscribe(Disposable d) {}
+
+                            @Override
+                            public void onNext(LCNull lcNull) {
+                                // 删除成功
+                                Log.d("CloudFunction", "Record with URL " + url + " deleted successfully.");
+                            }
+
+                            @Override
+                            public void onError(Throwable e) {
+                                Log.e("CloudFunction", "Error deleting record: " + e.getMessage());
+                            }
+
+                            @Override
+                            public void onComplete() {}
+                        });
+                    } else {
+                        Log.d("CloudFunction", "No matching record found for URL: " + url);
+                    }
+                }
+
+                @Override
+                public void onError(Throwable e) {
+                    Log.e("CloudFunction", "Error querying bin_url: " + e.getMessage());
+                }
+
+                @Override
+                public void onComplete() {}
+            });
+        } catch (Exception e) {
+            Log.e("CloudFunction", "Error: " + e.getMessage());
+        }
+    }
+
+
+    public void deleteFile_from_url(String fileUrl) {
+        LCUser currentUser = LCUser.getCurrentUser();
+        Log.i(TAG, "deleteFile: "+fileUrl);
+        int startIndex = fileUrl.indexOf("lcfile.com/") + "lcfile.com/".length();
+        String key = fileUrl.substring(startIndex);
+        Log.i(TAG, "deleteFile_from_url: key"+key);
+
+        LCQuery<LCObject> query = new LCQuery<>("_File");
+        query.whereEqualTo("key", key );
+        query.findInBackground().subscribe(new Observer<List<LCObject>>() {
+            public void onSubscribe(Disposable disposable) {}
+            public void onNext(List<LCObject> students) {
+                // students 是包含满足条件的 Student 对象的数组
+                Log.i(TAG, "onNext: success" + students);
+                if (students.isEmpty()) {
+                    Log.w(TAG, "No matching record found for URL: " + fileUrl);
+                    return;
+                }
+                String id = students.get(0).getObjectId();
+                LCObject file = LCObject.createWithoutData("_File", id);
+                file.deleteInBackground().subscribe(new Observer<LCNull>() {
+                    @Override
+                    public void onSubscribe(Disposable d) {
+                        // 删除开始时的处理
+                    }
+
+                    @Override
+                    public void onNext(LCNull response) {
+                        Log.d(TAG, "File deleted successfully: " + fileUrl);
+                        Toast.makeText(getContext(), "文件删除成功", Toast.LENGTH_SHORT).show();
+                        updateUI(currentUser); // 更新 UI
+                    }
+
+                    @Override
+                    public void onError(Throwable e) {
+                        // 删除失败
+                        Log.e(TAG, "File deletion failed", e);
+                        Toast.makeText(getContext(), "文件删除失败", Toast.LENGTH_SHORT).show();
+                    }
+
+                    @Override
+                    public void onComplete() {
+                        // 删除完成后的处理
+                    }
+                });
+
+            }
+            public void onError(Throwable throwable) {}
+            public void onComplete() {}
+        });
+    }
+
+    public void changeCurrentUrl(String id, String currentUrl){
         // 创建查询对象，查找 Device 表中的 deviceId 字段
         LCQuery<LCObject> query = new LCQuery<>("Device");
         query.whereEqualTo("deviceId", id); // 使用 device.getDeviceId() 获取设备 ID
@@ -586,75 +655,84 @@ public class UploadFragment extends Fragment implements View.OnClickListener {
         });
     }
 
-    /**
-     * Starts the upload process from the given URI (LeanCloud)
-     */
-    public void uploadFromUri(Uri fileUri) {
-        try {
-            InputStream inputStream = requireContext().getContentResolver().openInputStream(fileUri);
-            assert inputStream != null;
-            byte[] data = IOUtils.toByteArray(inputStream);  // 使用 IOUtils 或手动读取 InputStream
-            LCFile lcFile = new LCFile("uploaded_file.jpg", data);
+    //云函数
+    @SuppressLint("CheckResult")
+    public void callCloudFunctionWithObservable(String id,String url) {
+        // Get the current user (if user authentication is required)
+        LCUser currentUser = LCUser.getCurrentUser();
 
-            lcFile.saveInBackground().subscribe(new Observer<LCFile>() {
+        // Create a parameter map
+        Map<String, Object> params = new HashMap<>();
+        params.put("fileId", id);
+
+        // Call the cloud function and return Observable
+        Observable<Object> observable = LCCloud.callFunctionInBackground(currentUser, "convert_image_to_bin", params);
+
+        // Subscribe to the Observable and handle the cloud function result
+        observable
+                .subscribeOn(Schedulers.io()) // Make the network request on the IO thread
+                .observeOn(AndroidSchedulers.mainThread()) // Update UI on the main thread
+                .subscribe(
+                        result -> {
+                            // Handle the successful result from the cloud function
+                            Log.d("CloudFunction", "Result: " + result.toString());
+                            String regex = "binFileUrl=([\\S]+)";
+
+                            // 创建 Pattern 对象
+                            Pattern pattern = Pattern.compile(regex);
+
+                            // 创建 Matcher 对象
+                            Matcher matcher = pattern.matcher(result.toString());
+                            String binFileUrl ="";
+                            if (matcher.find()) {
+                                // 提取匹配到的 URL
+                                binFileUrl = matcher.group(1);
+                                Log.i(TAG, "callCloudFunctionWithObservable: Extracted URL: " + binFileUrl);
+                            } else {
+                                System.out.println("No match found.");
+                            }
+                            insertBinUrl(url,binFileUrl);
+                        },
+                        throwable -> {
+                            // Handle the error from the cloud function
+                            Log.e("CloudFunction", "Error: " + throwable.getMessage());
+                        }
+                );
+    }
+
+
+    public void insertBinUrl(String url, String binUrl) {
+        try {
+            // 创建一个新的 LCObject 对象，假设是 bin_url 表
+            LCObject binUrlObject = new LCObject("bin_url");
+
+            // 将 url 和 bin_url 字段设置为传入的值
+            binUrlObject.put("url", url);
+            binUrlObject.put("bin_url", binUrl);
+
+            // 保存到 LeanCloud bin_url 表
+            binUrlObject.saveInBackground().subscribe(new Observer<LCObject>() {
                 @Override
                 public void onSubscribe(Disposable d) {}
+
                 @Override
-                public void onNext(LCFile lcFile) {
-                    // 上传成功
-                    Log.d(TAG, "File uploaded: " + lcFile.getUrl() + lcFile.getObjectId());
-                    mDownloadUrl = Uri.parse(lcFile.getUrl());
-                    Toast.makeText(getContext(), "文件上传成功", Toast.LENGTH_SHORT).show();
-                    // 保存下载 URL 或进行其他操作
+                public void onNext(LCObject savedObject) {
+                    Log.d("CloudFunction", "Data inserted successfully: " + savedObject.toString());
                 }
+
                 @Override
                 public void onError(Throwable e) {
-                    Log.e(TAG, "File upload failed", e);
-                    Toast.makeText(getContext(), "文件上传失败", Toast.LENGTH_SHORT).show();
+                    Log.e("CloudFunction", "Error inserting data: " + e.getMessage());
                 }
+
                 @Override
                 public void onComplete() {}
             });
-        } catch (IOException e) {
-            Log.e(TAG, "Error reading file input stream", e);
+        } catch (Exception e) {
+            Log.e("CloudFunction", "Error: " + e.getMessage());
         }
     }
 
-    /**
-     * 将上传得到的 fileUrl 保存到当前用户的 imagePaths 字段
-     */
-    private void saveImageUrlToUser(String fileUrl) {
-        LCUser currentUser = LCUser.getCurrentUser();
-        if (currentUser == null) {
-            Log.e(TAG, "saveImageUrlToUser: no user logged in");
-            hideProgressBar();
-            return;
-        }
-
-        String userId = currentUser.getObjectId();
-        // 你可以直接在 LCUser 对象里保存，也可以有独立的 User 表
-        // 这里示例：把 imagePaths 存在 LCUser 的 Array 字段里
-        currentUser.addUnique("imagePaths", fileUrl);
-
-        currentUser.saveInBackground().subscribe(new Observer<LCObject>() {
-            @Override
-            public void onSubscribe(Disposable d) {}
-            @Override
-            public void onNext(LCObject lcObject) {
-                Log.d(TAG, "Image URL saved to user: " + fileUrl);
-                // 刷新列表
-                fetchUserImagePaths();
-            }
-            @Override
-            public void onError(Throwable e) {
-                hideProgressBar();
-                Log.e(TAG, "Failed to save image URL", e);
-                Toast.makeText(getContext(), "保存图片信息失败", Toast.LENGTH_SHORT).show();
-            }
-            @Override
-            public void onComplete() {}
-        });
-    }
 
     /**
      * Fetches the current user's image paths from LeanCloud and loads them into ViewPager2
@@ -769,9 +847,63 @@ public class UploadFragment extends Fragment implements View.OnClickListener {
         }
     }
 
+    public void findBinUrlByUrl(String url,boolean isDelete) {
+        try {
+            // 创建查询对象，查询 bin_url 表
+            LCQuery<LCObject> query = new LCQuery<>("bin_url");
+//            Student = leancloud.Object.extend('Student')
+
+            // 根据 url 字段查找对应记录
+            query.whereEqualTo("url", url);
+//            String bin_Url;
+
+            // 执行查询
+            query.findInBackground().subscribe(new Observer<List<LCObject>>() {
+                @Override
+                public void onSubscribe(Disposable d) {}
+
+                @Override
+                public void onNext(List<LCObject> results) {
+                    if (results != null && !results.isEmpty()) {
+                        // 获取查询结果中的第一个对象
+                        LCObject binUrlObject = results.get(0);
+
+                        // 获取 bin_url 字段的值
+                        String binUrl = binUrlObject.getString("bin_url");
+
+
+                        if(isDelete){
+                            deleteFile_from_url(binUrl.substring(0,binUrl.length()-1));
+                        }else{
+                            changeCurrentUrl(deviceId,binUrl);
+                        }
+
+                        // 打印或返回 bin_url
+                        Log.d("CloudFunction", "Found bin_url: " + binUrl);
+                    } else {
+                        Log.d("CloudFunction", "No matching record found.");
+                    }
+                }
+
+                @Override
+                public void onError(Throwable e) {
+                    Log.e("CloudFunction", "Error querying bin_url: " + e.getMessage());
+                }
+
+                @Override
+                public void onComplete() {}
+            });
+        } catch (Exception e) {
+            Log.e("CloudFunction", "Error: " + e.getMessage());
+        }
+
+    }
+
+
     private void updataUrl(){
         Log.i(TAG, "updataUrl: "+deviceId);
-        changeMode(deviceId,currentUrl);
+//        changeCurrentUrl(deviceId,currentUrl);
+        findBinUrlByUrl(currentUrl,false);
         Log.i(TAG, "updataUrl: "+currentUrl);
 
     }
