@@ -32,13 +32,16 @@ import androidx.core.view.WindowInsetsCompat;
 import androidx.core.view.WindowInsetsControllerCompat;
 import androidx.fragment.app.Fragment;
 import androidx.navigation.Navigation;
+import androidx.navigation.fragment.NavHostFragment;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.TimeZone;
 
 import cn.leancloud.LCUser;
@@ -58,6 +61,9 @@ public class MainBLUEFragment extends Fragment implements EasyPermissions.Permis
 
     private static final String TAG = "MainBLUEFragment";
     private static final Logger log = LoggerFactory.getLogger(MainBLUEFragment.class);
+
+    // 存储当前用户已配对的 deviceId（如 "7432F6E385A0"）
+    private final Set<String> pairedDeviceIds = new HashSet<>();
 
     static class DeviceInfo {
         String id;
@@ -151,6 +157,8 @@ public class MainBLUEFragment extends Fragment implements EasyPermissions.Permis
     public void onStart() {
         super.onStart();
 
+        loadPairedDeviceIds();
+
         deviceListData.clear();
         deviceListDataShow.clear();
         if (listViewAdapter != null) {
@@ -166,6 +174,23 @@ public class MainBLUEFragment extends Fragment implements EasyPermissions.Permis
         // ECBLE.stopBluetoothDevicesDiscovery(getContext());
     }
 
+    private void loadPairedDeviceIds() {
+        LCUser user = LCUser.getCurrentUser();
+        if (user == null) {
+            Log.d(TAG, "loadPairedDeviceIds: no current user");
+            return;
+        }
+        List<String> ids = user.getList("deviceId");
+        if (ids == null) {
+            Log.d(TAG, "loadPairedDeviceIds: user.deviceId is null");
+        } else {
+            Log.d(TAG, "loadPairedDeviceIds: raw ids from user = " + ids);
+            pairedDeviceIds.clear();
+            pairedDeviceIds.addAll(ids);
+            Log.d(TAG, "loadPairedDeviceIds: pairedDeviceIds set = " + pairedDeviceIds);
+        }
+    }
+
     void uiInit(View rootView) {
         Log.i(TAG, "uiInit: blue_fragment");
         // 设置 Window Insets
@@ -174,32 +199,6 @@ public class MainBLUEFragment extends Fragment implements EasyPermissions.Permis
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
             return insets;
         });
-
-//        // 设置状态栏颜色
-//        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-//            if (getActivity() != null) {
-////                getActivity().getWindow().setStatusBarColor(0xFF01a4ef);
-//            }
-//        }
-//
-//        // 设置状态栏图标颜色
-//        WindowInsetsControllerCompat windowInsetsController =
-//                ViewCompat.getWindowInsetsController(getActivity().getWindow().getDecorView());
-//        if (windowInsetsController != null) {
-//            windowInsetsController.setAppearanceLightStatusBars(false);
-//        }
-//
-//        // 设置导航栏颜色
-//        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-//            if (getActivity() != null) {
-//                getActivity().getWindow().setNavigationBarColor(0xFFFFFFFF);
-//            }
-//        }
-//        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-//            if (getActivity() != null) {
-//                getActivity().getWindow().setNavigationBarContrastEnforced(false);
-//            }
-//        }
 
         // 设置 SwipeRefreshLayout
         SwipeRefreshLayout swipeRefreshLayout = rootView.findViewById(R.id.swipe_layout);
@@ -242,39 +241,64 @@ public class MainBLUEFragment extends Fragment implements EasyPermissions.Permis
                             e.printStackTrace();
                         }
                         hideConnectDialog();
+                        String changedevicename = deviceInfo.name;
+
                         if (ok) {
-                            // ECBLE.stopBluetoothDevicesDiscovery(getContext());
-                            // 启动 DeviceActivity
-//                            Intent intent = new Intent(requireContext(), DeviceActivity.class);
-//                            startActivity(intent);
-                            send("AT_ID?\r\n");  // 向设备发送命令
-                            // 更新 UI 上的连接状态
-                            ECBLE.onBLECharacteristicValueChange((String str, String strHex) -> {
-                                String id = str.substring(6,18); // 从索引 6 开始直到字符串末尾
-                                Log.i("Extracted ID", id);
 
-                                add_user_device(id);
 
-                                add_device(id);
 
-                                // 更新 UI 和导航
-                                Log.i("DeviceActivity", "Context is: " + requireContext());
-//                                requireActivity().runOnUiThread(() -> {
-//                                    // Show Toast on the main thread
-//                                    Toast.makeText(requireContext(), "add device: " + str, Toast.LENGTH_SHORT).show();
-//                                    Navigation.findNavController(requireView()).navigate(R.id.action_mainBLUEFragment_to_deviceList);
-//                                });
-                            });
+                            String fullName = deviceInfo.name;
+                            if (fullName == null || !fullName.startsWith("AURA_GALLERY_")) {
+                                showToast("设备名称不符合预期: " + fullName);
+                                return;
+                            }
 
+                            // 截取前缀后四位作为 ID
+                            String shortId = fullName.substring("AURA_GALLERY_".length(),
+                                    "AURA_GALLERY_".length() + 4);
+
+                            Log.i(TAG, "连上的id是："+shortId);
+
+                            // ===== 改动在这里 =====
+                            boolean alreadyPaired = false;
+                            for (String fullId : pairedDeviceIds) {
+                                if (fullId.startsWith(shortId)) {
+                                    alreadyPaired = true;
+                                    break;
+                                }
+                            }
+
+                            // 2) 判断是否已配对
+                            if (alreadyPaired) {
+                                // --- 已配对，直接标记已连接，不做二次配对 ---
+                                notifyConnected(fullName,true);
+                                Log.i(TAG, "已经存在，不需要配对");
+                            } else {
+                                // --- 未配对，走正常的 LeanCloud 账号配对流程 ---
+//                                pairDeviceWithAccount(deviceName);
+                                send("AT_ID?\r\n");  // 向设备发送命令
+                                // 更新 UI 上的连接状态
+                                ECBLE.onBLECharacteristicValueChange((String str, String strHex) -> {
+                                    String id = str.substring(6,18); // 从索引 6 开始直到字符串末尾
+                                    Log.i("Extracted ID", id);
+
+                                    add_user_device(id);
+
+                                    add_device(id);
+
+                                    // 更新 UI 和导航
+                                    Log.i("DeviceActivity", "Context is: " + requireContext());
+                                });
+                            }
 //                            Navigation.findNavController(requireView()).navigate(R.id.action_mainBLUEFragment_to_deviceList);
 //                            Navigation.findNavController(requireView()).navigate(R.id.action_mainBLUEFragment_to_wifi_connect);
                             if (getActivity() != null) {
                                 getActivity().overridePendingTransition(R.anim.jump_enter_anim, R.anim.jump_exit_anim);
                             }
                         } else {
-                            showToast("蓝牙连接失败,errCode=" + errCode + ",errMsg=" + errMsg);
-                            showAlert("提示", "蓝牙连接失败,errCode=" + errCode + ",errMsg=" + errMsg, () -> {
-                            });
+                            // 连接失败
+                            showToast("BLE 连接失败: " + errMsg);
+                            notifyConnected(changedevicename,false);
                         }
                     });
                 }
@@ -282,6 +306,29 @@ public class MainBLUEFragment extends Fragment implements EasyPermissions.Permis
             ECBLE.createBLEConnection(requireContext(), deviceInfo.id);
         });
         listRefresh();
+    }
+
+    /** 通知 DeviceListFragment 更新 UI 为已连接 **/
+    private void notifyConnected(String fullName,boolean isok) {
+        // 1. 发回结果给 DeviceListFragment
+        Bundle result = new Bundle();
+        result.putString("ble_connected_name", fullName);
+
+        Log.i(TAG, "!!!! BLE states:"+fullName+"--->"+isok);
+
+        getParentFragmentManager().setFragmentResult("ble_connected", result);
+
+        // 2. 提示用户
+        requireActivity().runOnUiThread(() -> {
+            Toast.makeText(getContext(),
+                            "设备 " + fullName + " 已连接",
+                            Toast.LENGTH_SHORT)
+                    .show();
+
+            // 3. 跳转回设备列表 Tab
+            NavHostFragment.findNavController(this)
+                    .navigate(R.id.navigation_devices);
+        });
     }
 
     public void send(String data){
@@ -293,14 +340,20 @@ public class MainBLUEFragment extends Fragment implements EasyPermissions.Permis
         new Handler().postDelayed(() -> {
             deviceListDataShow.clear();
             for (DeviceInfo tempDevice : deviceListData) {
-                deviceListDataShow.add(new DeviceInfo(tempDevice.id, tempDevice.name, tempDevice.mac, tempDevice.rssi, tempDevice.isConnected()));
+                String name = tempDevice.name == null ? "" : tempDevice.name;
+                // 只保留以 "AURA_GALLERY" 开头的设备
+                if (name.startsWith("AURA_GALLERY")) {
+                    deviceListDataShow.add(new DeviceInfo(tempDevice.id, tempDevice.name, tempDevice.mac, tempDevice.rssi, tempDevice.isConnected()));
+                }
             }
             if (listViewAdapter != null) {
                 listViewAdapter.notifyDataSetChanged();
             }
+            // 继续轮询
             listRefresh();
         }, 400);
     }
+
 
     void add_user_device(String id) {
         LCUser currentUser = LCUser.getCurrentUser();

@@ -126,20 +126,6 @@ public class DeviceActivity extends AppCompatActivity {
             // 更新 ViewModel
             Log.i("DeviceActivity11111111", "onCreate: "+str);
         });
-//        ECBLE.onBLECharacteristicValueChange((String str,String strHex)-> runOnUiThread(()->{
-//            @SuppressLint("SimpleDateFormat") String timeStr = new SimpleDateFormat("[HH:mm:ss,SSS]: ").format(new Date(System.currentTimeMillis()));
-//            String nowStr = receiveDataTextView.getText().toString();
-//            receiveDataTextView.setTextIsSelectable(false);
-//            if (hexRevCheckBox.isChecked()) {
-//                receiveDataTextView.setText(nowStr + timeStr + strHex.replaceAll("(.{2})","$1 ") + "\r\n");
-//            } else {
-//                receiveDataTextView.setText(nowStr + timeStr + str + "\r\n");
-//            }
-//            receiveDataTextView.setTextIsSelectable(true);
-//            if (scrollCheckBox.isChecked()) {
-//                scrollView.post(()-> scrollView.fullScroll(ScrollView.FOCUS_DOWN));
-//            }
-//        }));
     }
 
     @Override

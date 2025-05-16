@@ -76,14 +76,7 @@ public class DeviceListFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        // Initialize views
-//        Toolbar topAppBar = view.findViewById(R.id.topAppBar);
-
         RecyclerView recyclerViewDevices = view.findViewById(R.id.recyclerViewDevices);
-
-        // Set up the top app bar
-//        topAppBar.setTitle("Devices");
-
 
         // Set up the RecyclerView
         recyclerViewDevices.setLayoutManager(new LinearLayoutManager(getContext()));
@@ -167,18 +160,6 @@ public class DeviceListFragment extends Fragment {
 
         // Fetch the device list from LeanCloud
         fetchDeviceList();
-
-        // Set up top app bar menu item click listener
-//        topAppBar.setOnMenuItemClickListener(item -> {
-//            if (item.getItemId() == R.id.action_add) {
-//                // Handle the add button click event
-//                Navigation.findNavController(requireView()).navigate(R.id.action_deviceListFragment_to_blueFragment);
-//                return true;
-//            }
-//            return false;
-//        });
-
-
     }
 
     public void changeMode(String id,String mode){
