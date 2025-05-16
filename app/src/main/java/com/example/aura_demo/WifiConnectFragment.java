@@ -124,7 +124,7 @@ public class WifiConnectFragment extends Fragment {
 
         // For now, we simulate a successful connection
         Toast.makeText(getContext(), "Connecting to " + ssid + " with password: " + password, Toast.LENGTH_SHORT).show();
-        send("AT_WIFI_"+ssid+"+"+password+"\r\n");
+        send("AT_WIFI_"+ssid+"_"+password+"\r\n");
         Navigation.findNavController(requireView()).navigate(R.id.action_wifi_connect_to_deviceList);
 
         // Example: Check if we are connected to the Wi-Fi (this is just a placeholder)

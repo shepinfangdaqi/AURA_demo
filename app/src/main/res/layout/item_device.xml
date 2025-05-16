@@ -8,35 +8,42 @@
     android:layout_marginBottom="8dp"
     app:cardElevation="4dp"
     app:cardCornerRadius="8dp"
-    app:strokeWidth="1dp"
-    app:strokeColor="#DDDDDD">
+    app:strokeWidth="10dp"
+    app:strokeColor="#000000">
 
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="301dp"
+        android:layout_height="match_parent"
         android:gravity="center_vertical"
         android:orientation="horizontal"
         android:padding="16dp">
 
-        <!-- 设备图标 -->
-        <ImageView
-            android:id="@+id/imageViewIcon"
-            android:layout_width="58dp"
-            android:layout_height="79dp"
-            android:src="@drawable/image1" /><!-- 替换为实际图标 -->
-        <!--        android:contentDescription="Device Icon"-->
-        <!--        android:tint="?attr/colorPrimary" />-->
-
-        <!-- 设备信息 -->
-
-        <!-- 三个点的按钮 -->
 
         <LinearLayout
             android:layout_width="0dp"
-            android:layout_height="130dp"
+            android:layout_height="180dp"
             android:layout_marginStart="16dp"
             android:layout_weight="1"
             android:orientation="vertical">
+
+            <!-- 新增的用于显示蓝牙名称的 TextView -->
+            <TextView
+                android:id="@+id/textViewDeviceId"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="AURA_GALLERY_XXXX"
+                android:textSize="16sp"
+                android:textStyle="bold"/>
+
+            <!-- 显示连接状态 -->
+            <TextView
+                android:id="@+id/textViewBLEStatus"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="BLE: Disconnect"
+                android:textSize="16sp"
+                android:textColor="@android:color/black"
+                android:layout_marginTop="8dp"/>
 
             <!-- Status -->
             <TextView
@@ -90,11 +97,10 @@
             android:layout_width="wrap_content"
             android:layout_height="66dp"
             android:layout_marginStart="8dp"
-
-            android:contentDescription="@string/menu_options"
-            android:src="@drawable/pencil"
-            android:tint="@android:color/black" />
-
+            android:contentDescription="@string/settings_options"
+            android:src="@drawable/baseline_settings_24"
+            android:tint="@android:color/black"
+            android:backgroundTint="@android:color/transparent"/>
 
 
         <!-- 可选：右箭头图标，表示可点击 -->

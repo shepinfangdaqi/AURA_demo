@@ -62,4 +62,6 @@
     <string name="title_name">蓝牙连接</string>
     <string name="wifi_title_name">Wi-Fi连接</string>
 
+    <string name="settings_options">Setting</string>
+
 </resources>

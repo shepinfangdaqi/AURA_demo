@@ -15,6 +15,10 @@ public class Device {
 
     private String power;
 
+    private String bleName;  // 新增的字段，用于存储蓝牙设备名称
+
+    private boolean connected;  // 连接状态
+
     // 空构造函数（Firebase 需要）
     public Device() {
     }
@@ -28,6 +32,8 @@ public class Device {
         this.hengshu = hengshu;
         this.timeZone = timeZone;
         this.power = power;
+        this.bleName = bleName;  // 初始化 BLE 名称
+        this.connected = connected;  // 默认未连接
     }
     public String gettimeZone() {
         return timeZone;
@@ -86,5 +92,16 @@ public class Device {
     }
     public void setPower(String power) {
         this.power = power;
+    }
+
+    public String getBleName() { return bleName;}
+    public void setBleName(String bleName) {this.bleName = bleName;}
+
+    public boolean isConnected() {
+        return connected;
+    }
+
+    public void setConnected(boolean connected) {
+        this.connected = connected;
     }
 }

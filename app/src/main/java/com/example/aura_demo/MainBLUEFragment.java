@@ -64,12 +64,23 @@ public class MainBLUEFragment extends Fragment implements EasyPermissions.Permis
         String name;
         String mac;
         int rssi;
+        boolean isConnected;  // 添加连接状态字段
 
-        DeviceInfo(String id, String name, String mac, int rssi) {
+
+        DeviceInfo(String id, String name, String mac, int rssi,boolean isConnected) {
             this.id = id;
             this.name = name;
             this.mac = mac;
             this.rssi = rssi;
+            this.isConnected = isConnected;  // 初始化连接状态
+        }
+
+        public boolean isConnected() {
+            return isConnected;
+        }
+
+        public void setConnected(boolean connected) {
+            isConnected = connected;
         }
     }
 
@@ -214,6 +225,14 @@ public class MainBLUEFragment extends Fragment implements EasyPermissions.Permis
             showConnectDialog();
 
             DeviceInfo deviceInfo = (DeviceInfo) listView.getItemAtPosition(i);
+
+            // 模拟设备连接（假设连接成功）
+            deviceInfo.setConnected(true);  // 假设成功连接设备时更新连接状态
+
+            // 更新设备列表中的连接状态
+            listViewAdapter.notifyDataSetChanged();
+
+
             ECBLE.onBLEConnectionStateChange((boolean ok, int errCode, String errMsg) -> {
                 if (getActivity() != null) {
                     getActivity().runOnUiThread(() -> {
@@ -224,12 +243,12 @@ public class MainBLUEFragment extends Fragment implements EasyPermissions.Permis
                         }
                         hideConnectDialog();
                         if (ok) {
-
                             // ECBLE.stopBluetoothDevicesDiscovery(getContext());
                             // 启动 DeviceActivity
 //                            Intent intent = new Intent(requireContext(), DeviceActivity.class);
 //                            startActivity(intent);
                             send("AT_ID?\r\n");  // 向设备发送命令
+                            // 更新 UI 上的连接状态
                             ECBLE.onBLECharacteristicValueChange((String str, String strHex) -> {
                                 String id = str.substring(6,18); // 从索引 6 开始直到字符串末尾
                                 Log.i("Extracted ID", id);
@@ -264,6 +283,7 @@ public class MainBLUEFragment extends Fragment implements EasyPermissions.Permis
         });
         listRefresh();
     }
+
     public void send(String data){
         Log.i(TAG, "send data: "+data);
         ECBLE.writeBLECharacteristicValue(data, false);
@@ -273,7 +293,7 @@ public class MainBLUEFragment extends Fragment implements EasyPermissions.Permis
         new Handler().postDelayed(() -> {
             deviceListDataShow.clear();
             for (DeviceInfo tempDevice : deviceListData) {
-                deviceListDataShow.add(new DeviceInfo(tempDevice.id, tempDevice.name, tempDevice.mac, tempDevice.rssi));
+                deviceListDataShow.add(new DeviceInfo(tempDevice.id, tempDevice.name, tempDevice.mac, tempDevice.rssi, tempDevice.isConnected()));
             }
             if (listViewAdapter != null) {
                 listViewAdapter.notifyDataSetChanged();
@@ -556,7 +576,7 @@ public class MainBLUEFragment extends Fragment implements EasyPermissions.Permis
                         }
                     }
                     if (!isExist) {
-                        deviceListData.add(new DeviceInfo(id, name, mac, rssi));
+                        deviceListData.add(new DeviceInfo(id, name, mac, rssi,false));
                     }
                 });
             }

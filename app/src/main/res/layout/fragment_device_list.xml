@@ -12,7 +12,7 @@
         android:layout_width="match_parent"
         android:layout_height="?attr/actionBarSize"
         android:background="?attr/colorPrimary"
-        android:title="设备列表"
+        android:title="Device List"
         android:titleTextColor="@android:color/white"
         app:menu="@menu/menu_device_list" />
 

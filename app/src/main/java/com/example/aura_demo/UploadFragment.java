@@ -351,6 +351,7 @@ public class UploadFragment extends Fragment implements View.OnClickListener {
 
                         // 更新用户对象的 imagePaths 字段
                         currentUser.put("imagePaths", imagePaths);
+                        Log.d(TAG, "File imagePaths: " + imagePaths);
 
                         // 保存更新后的用户对象
                         currentUser.saveInBackground().subscribe(
@@ -687,6 +688,11 @@ public class UploadFragment extends Fragment implements View.OnClickListener {
                             if (matcher.find()) {
                                 // 提取匹配到的 URL
                                 binFileUrl = matcher.group(1);
+                                // 检查 binFileUrl 是否以逗号结尾，如果是则删除最后一个字符
+                                if (binFileUrl.endsWith(",")) {
+                                    binFileUrl = binFileUrl.substring(0, binFileUrl.length() - 1);
+                                }
+
                                 Log.i(TAG, "callCloudFunctionWithObservable: Extracted URL: " + binFileUrl);
                             } else {
                                 System.out.println("No match found.");

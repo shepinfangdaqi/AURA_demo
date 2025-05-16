@@ -41,18 +41,34 @@ public class DeviceAdapter extends RecyclerView.Adapter<DeviceAdapter.DeviceView
     public DeviceViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
         View view = LayoutInflater.from(context).inflate(R.layout.item_device, parent, false);
         return new DeviceViewHolder(view);
+
+
     }
 
     @Override
     public void onBindViewHolder(DeviceViewHolder holder, int position) {
         Device device = deviceList.get(position);
         holder.bind(device, listener);
+
+        // 根据设备的连接状态更新显示
+        if (device.isConnected()) {
+            holder.textViewBLEStatus.setText("BLE: Connected");
+        } else {
+            holder.textViewBLEStatus.setText("BLE: Disconnected");
+        }
+
     }
 
     @Override
     public int getItemCount() {
         return deviceList.size();
     }
+    // 更新设备的连接状态并刷新 UI
+    public void updateDeviceConnectionStatus(Device device, boolean isConnected) {
+        device.setConnected(isConnected);
+        notifyDataSetChanged();  // 刷新 UI
+    }
+
 
     // ViewHolder 类
     public static class DeviceViewHolder extends RecyclerView.ViewHolder {
@@ -68,27 +84,34 @@ public class DeviceAdapter extends RecyclerView.Adapter<DeviceAdapter.DeviceView
 
         ImageButton buttonMore;
 
+
+        TextView textViewDeviceId;  // 修改这里：用于显示 deviceId
+
+        TextView textViewBLEStatus;  // 显示蓝牙连接状态
+
         public DeviceViewHolder(View itemView) {
             super(itemView);
-            imageViewIcon = itemView.findViewById(R.id.imageViewIcon);
+            textViewDeviceId = itemView.findViewById(R.id.textViewDeviceId);  // 修改这里
+            textViewBLEStatus = itemView.findViewById(R.id.textViewBLEStatus);  // 蓝牙连接状态显示
             textViewStatus = itemView.findViewById(R.id.textViewStatus);
             textViewMode = itemView.findViewById(R.id.textViewMode);
             textViewFrequency = itemView.findViewById(R.id.textViewFrequency);
             textViewHengshu = itemView.findViewById(R.id.textViewHengshu);
             textViewPower = itemView.findViewById(R.id.textViewPower);
             buttonMore = itemView.findViewById(R.id.buttonMore);
+
 //            imageViewArrow = itemView.findViewById(R.id.imageViewArrow);
         }
 
         public void bind(final Device device, final OnItemClickListener listener) {
             // 加载图标
-            if (device.getIconUrl() != null && !device.getIconUrl().isEmpty()) {
-                // 如果使用 URL 加载图片
-                imageViewIcon.setImageResource(R.drawable.image1);
-            } else {
-                // 使用本地资源
-                imageViewIcon.setImageResource(R.drawable.image2);
-            }
+//            if (device.getIconUrl() != null && !device.getIconUrl().isEmpty()) {
+//                // 如果使用 URL 加载图片
+//                imageViewIcon.setImageResource(R.drawable.image1);
+//            } else {
+//                // 使用本地资源
+//                imageViewIcon.setImageResource(R.drawable.image2);
+//            }
 
             // 设置文本
             textViewStatus.setText("状态: " + device.getStatus());
@@ -96,7 +119,16 @@ public class DeviceAdapter extends RecyclerView.Adapter<DeviceAdapter.DeviceView
             textViewFrequency.setText("频率: " + device.getFrequency());
             textViewHengshu.setText("横竖: " + device.getHengshu());
             textViewPower.setText("电量: " + device.getPower());
+            // 格式化 deviceId，取前四位并拼接 "AURA_GALLERY_"
+            String formattedDeviceId = "AURA_GALLERY_" + device.getDeviceId().substring(0, 4);
+            textViewDeviceId.setText(formattedDeviceId);  // 显示格式化后的 deviceId
 
+            // 设置蓝牙连接状态
+            if (device.isConnected()) {
+                textViewBLEStatus.setText("BLE: Connected");
+            } else {
+                textViewBLEStatus.setText("BLE: Disconnect");
+            }
 
             // 设置点击事件
             itemView.setOnClickListener(new View.OnClickListener(){

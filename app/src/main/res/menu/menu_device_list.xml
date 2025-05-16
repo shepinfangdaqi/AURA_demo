@@ -2,7 +2,7 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
     <item
         android:id="@+id/action_add"
-        android:title="添加"
-        android:icon="@drawable/ic_file_upload_white_24dp"
-    android:showAsAction="always" />
+        android:title="Connect Device"
+        android:icon="@android:drawable/ic_input_add"
+        android:showAsAction="always" />
 </menu>
