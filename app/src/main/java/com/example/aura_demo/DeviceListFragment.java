@@ -77,12 +77,12 @@ public class DeviceListFragment extends Fragment {
         super.onViewCreated(view, savedInstanceState);
 
         // Initialize views
-        Toolbar topAppBar = view.findViewById(R.id.topAppBar);
+//        Toolbar topAppBar = view.findViewById(R.id.topAppBar);
 
         RecyclerView recyclerViewDevices = view.findViewById(R.id.recyclerViewDevices);
 
         // Set up the top app bar
-        topAppBar.setTitle("Devices");
+//        topAppBar.setTitle("Devices");
 
 
         // Set up the RecyclerView
@@ -99,22 +99,6 @@ public class DeviceListFragment extends Fragment {
             public void onMenuItemClick(Device device, int menuItemId) throws FileNotFoundException {
                 Log.i(TAG, "onMenuItemClick: "+  R.id.action_calendar_mode);
                 if (menuItemId == R.id.action_calendar_mode){
-//                    LCFile file = LCFile.withAbsoluteLocalPath("11.jpeg", "/storage/emulated/0/Download/11.jpeg");
-//                    file.saveInBackground().subscribe(new Observer<LCFile>() {
-//                        public void onSubscribe(Disposable disposable) {}
-//                        public void onNext(LCFile file) {
-//                            System.out.println("文件保存完成。URL：" + file.getUrl() + "，文件名：" + file.getObjectId());
-//                            String id = file.getObjectId();
-//                            callCloudFunctionWithObservable(id);
-//                        }
-//                        public void onError(Throwable throwable) {
-//                            // 保存失败，可能是文件无法被读取，或者上传过程中出现问题
-//                        }
-//                        public void onComplete() {}
-//                    });
-
-
-
                     send("AT_ID?\r\n");
                     send("AT_STA?\r\n");
 //                    navigateToUploadFragment(device,"日历");
@@ -185,14 +169,14 @@ public class DeviceListFragment extends Fragment {
         fetchDeviceList();
 
         // Set up top app bar menu item click listener
-        topAppBar.setOnMenuItemClickListener(item -> {
-            if (item.getItemId() == R.id.action_add) {
-                // Handle the add button click event
-                Navigation.findNavController(requireView()).navigate(R.id.action_deviceListFragment_to_blueFragment);
-                return true;
-            }
-            return false;
-        });
+//        topAppBar.setOnMenuItemClickListener(item -> {
+//            if (item.getItemId() == R.id.action_add) {
+//                // Handle the add button click event
+//                Navigation.findNavController(requireView()).navigate(R.id.action_deviceListFragment_to_blueFragment);
+//                return true;
+//            }
+//            return false;
+//        });
 
 
     }

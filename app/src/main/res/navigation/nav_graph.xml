@@ -19,6 +19,12 @@
         android:name="com.example.aura_demo.UserFragment"
         android:label="用户管理" />
 
+    <!-- 新增：添加设备，指向蓝牙搜索页面 BlueFragment -->
+    <fragment
+        android:id="@+id/navigation_add_device"
+        android:name="com.example.aura_demo.MainBLUEFragment"
+        android:label="添加设备" />
+
 <!--    &lt;!&ndash; 3) 用户管理 &ndash;&gt;-->
 <!--    <fragment-->
 <!--        android:id="@+id/navigation_user"-->

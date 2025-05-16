@@ -2,8 +2,11 @@ package com.example.aura_demo;
 
 import android.Manifest;
 import android.content.pm.PackageManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.View;
+import android.view.WindowInsetsController;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -46,6 +49,22 @@ public class MainActivity extends AppCompatActivity {
         NavController navController = Navigation.findNavController(this, R.id.nav_host_fragment);
         BottomNavigationView bottomNav = findViewById(R.id.bottom_nav);
         NavigationUI.setupWithNavController(bottomNav, navController);
+
+        navController.addOnDestinationChangedListener((controller, destination, args) -> {
+            // API 30+ 用 WindowInsetsController
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                getWindow().getInsetsController().setSystemBarsAppearance(
+                        WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS,
+                        WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS
+                );
+            } else {
+                // 旧版用 SYSTEM_UI_FLAG
+                View decor = getWindow().getDecorView();
+                decor.setSystemUiVisibility(
+                        decor.getSystemUiVisibility() | View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR
+                );
+            }
+        });
     }
 
     /** 检查并申请 BLE 权限 **/

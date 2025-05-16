@@ -64,4 +64,6 @@
 
     <string name="settings_options">Setting</string>
 
+    <string name="add_device">Add Devices</string>
+
 </resources>

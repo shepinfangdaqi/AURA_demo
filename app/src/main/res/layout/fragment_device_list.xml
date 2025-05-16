@@ -7,14 +7,6 @@
     android:orientation="vertical">
 
     <!-- Top App Bar -->
-    <androidx.appcompat.widget.Toolbar
-        android:id="@+id/topAppBar"
-        android:layout_width="match_parent"
-        android:layout_height="?attr/actionBarSize"
-        android:background="?attr/colorPrimary"
-        android:title="Device List"
-        android:titleTextColor="@android:color/white"
-        app:menu="@menu/menu_device_list" />
 
     <!-- RecyclerView -->
     <androidx.recyclerview.widget.RecyclerView

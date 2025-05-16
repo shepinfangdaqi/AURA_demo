@@ -175,31 +175,31 @@ public class MainBLUEFragment extends Fragment implements EasyPermissions.Permis
             return insets;
         });
 
-        // 设置状态栏颜色
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            if (getActivity() != null) {
-                getActivity().getWindow().setStatusBarColor(0xFF01a4ef);
-            }
-        }
-
-        // 设置状态栏图标颜色
-        WindowInsetsControllerCompat windowInsetsController =
-                ViewCompat.getWindowInsetsController(getActivity().getWindow().getDecorView());
-        if (windowInsetsController != null) {
-            windowInsetsController.setAppearanceLightStatusBars(false);
-        }
-
-        // 设置导航栏颜色
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            if (getActivity() != null) {
-                getActivity().getWindow().setNavigationBarColor(0xFFFFFFFF);
-            }
-        }
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            if (getActivity() != null) {
-                getActivity().getWindow().setNavigationBarContrastEnforced(false);
-            }
-        }
+//        // 设置状态栏颜色
+//        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+//            if (getActivity() != null) {
+////                getActivity().getWindow().setStatusBarColor(0xFF01a4ef);
+//            }
+//        }
+//
+//        // 设置状态栏图标颜色
+//        WindowInsetsControllerCompat windowInsetsController =
+//                ViewCompat.getWindowInsetsController(getActivity().getWindow().getDecorView());
+//        if (windowInsetsController != null) {
+//            windowInsetsController.setAppearanceLightStatusBars(false);
+//        }
+//
+//        // 设置导航栏颜色
+//        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+//            if (getActivity() != null) {
+//                getActivity().getWindow().setNavigationBarColor(0xFFFFFFFF);
+//            }
+//        }
+//        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+//            if (getActivity() != null) {
+//                getActivity().getWindow().setNavigationBarContrastEnforced(false);
+//            }
+//        }
 
         // 设置 SwipeRefreshLayout
         SwipeRefreshLayout swipeRefreshLayout = rootView.findViewById(R.id.swipe_layout);
