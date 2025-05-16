@@ -3,7 +3,27 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/nav_graph"
-    app:startDestination="@id/EmailPasswordFragment">
+    app:startDestination="@id/navigation_devices">
+
+    <!-- 设备管理 -->
+    <fragment
+        android:id="@+id/navigation_devices"
+        android:name="com.example.aura_demo.DeviceListFragment"
+        android:label="设备管理" >
+        <!-- 保留原有到 Wifi/Blue/UploadFragment 的子 action -->
+    </fragment>
+
+    <!-- 用户管理：登录与登出都在这里处理 -->
+    <fragment
+        android:id="@+id/navigation_user"
+        android:name="com.example.aura_demo.UserFragment"
+        android:label="用户管理" />
+
+<!--    &lt;!&ndash; 3) 用户管理 &ndash;&gt;-->
+<!--    <fragment-->
+<!--        android:id="@+id/navigation_user"-->
+<!--        android:name="com.example.aura_demo.UserFragment"-->
+<!--        android:label="用户管理" />-->
 
 
     <!--  设置页面跳转选择按钮  -->

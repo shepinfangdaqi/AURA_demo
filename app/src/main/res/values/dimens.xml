@@ -16,4 +16,6 @@
     <dimen name="margin_1">8dp</dimen>
     <dimen name="margin_2">16dp</dimen>
 
+    <dimen name="bottom_nav_height">56dp</dimen>
+
 </resources>
