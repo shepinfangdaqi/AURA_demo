@@ -77,31 +77,31 @@ public class DeviceActivity extends AppCompatActivity {
                 //send hex
                 data = data.replace(" ","").replace("\r","").replace("\n","");
                 if (data.isEmpty()) {
-                    showAlert("提示", "请输入要发送的数据",()->{});
+                    showAlert(getString(R.string.my_notice), getString(R.string.input_data),()->{});
                     return;
                 }
                 if (data.length() % 2 != 0) {
-                    showAlert("提示", "长度错误，长度只能是双数",()->{});
+                    showAlert(getString(R.string.my_notice), getString(R.string.length_error),()->{});
                     return;
                 }
                 if (data.length() > 488) {
-                    showAlert("提示", "最多只能发送244字节",()->{});
+                    showAlert(getString(R.string.my_notice), getString(R.string.max_244),()->{});
                     return;
                 }
                 if (!Pattern.compile("^[0-9a-fA-F]+$").matcher(data).matches()) {
-                    showAlert("提示", "格式错误，只能是0-9、a-f、A-F",()->{});
+                    showAlert(getString(R.string.my_notice), getString(R.string.formate_error),()->{});
                     return;
                 }
                 ECBLE.writeBLECharacteristicValue(data, true);
             } else {
                 //send string
                 if (data.isEmpty()) {
-                    showAlert("提示", "请输入要发送的数据",()->{});
+                    showAlert(getString(R.string.my_notice), getString(R.string.input_data),()->{});
                     return;
                 }
                 String tempSendData = data.replace("\n","\r\n");
                 if (tempSendData.length() > 244) {
-                    showAlert("提示", "最多只能发送244字节",()->{});
+                    showAlert(getString(R.string.my_notice), getString(R.string.max_244),()->{});
                     return;
                 }
                 Log.i("TAG", "onCreate: "+tempSendData);
@@ -119,8 +119,8 @@ public class DeviceActivity extends AppCompatActivity {
         ECBLE.setChineseTypeGBK();
 
         ECBLE.onBLEConnectionStateChange((boolean ok, int errCode, String errMsg)-> runOnUiThread(()->{
-            showToast("蓝牙断开连接");
-            showAlert("提示","蓝牙断开连接",()->{});
+            showToast(getString(R.string.ble_disconect));
+            showAlert(getString(R.string.my_notice),getString(R.string.ble_disconect),()->{});
         }));
         ECBLE.onBLECharacteristicValueChange((String str, String strHex) -> {
             // 更新 ViewModel

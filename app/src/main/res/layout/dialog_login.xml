@@ -15,7 +15,7 @@
     <com.google.android.material.textfield.TextInputLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="邮箱">
+        android:hint="@string/my_email">
 
         <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/fieldEmail"
@@ -28,7 +28,7 @@
         android:layout_marginTop="16dp"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="密码">
+        android:hint="@string/my_passwd">
 
         <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/fieldPassword"
@@ -42,13 +42,13 @@
         android:layout_marginTop="24dp"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="登录" />
+        android:text="@string/my_login" />
 
     <com.google.android.material.button.MaterialButton
         android:id="@+id/btnCreateAccount"
         android:layout_marginTop="8dp"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="注册" />
+        android:text="@string/my_register" />
 
 </LinearLayout>

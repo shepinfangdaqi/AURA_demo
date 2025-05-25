@@ -18,7 +18,7 @@
         android:layout_below="@id/button_to_login"
         android:layout_centerHorizontal="true"
         android:layout_marginTop="160dp"
-        android:text="设备管理" />
+        android:text="@string/device_manage" />
 
 <!--    <Button-->
 <!--        android:id="@+id/button_to_profile"-->

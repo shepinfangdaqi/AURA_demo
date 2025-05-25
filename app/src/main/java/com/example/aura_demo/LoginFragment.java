@@ -103,7 +103,7 @@ public class LoginFragment extends BaseFragment {
             public void onError(Throwable throwable) {
                 // 注册失败（通常是因为用户名已被使用）
                 Log.e(TAG, "注册失败", throwable);
-                Toast.makeText(getContext(), "注册失败", Toast.LENGTH_SHORT).show();
+                Toast.makeText(getContext(), getString(R.string.register_fail), Toast.LENGTH_SHORT).show();
                 updateUI(null);
             }
 

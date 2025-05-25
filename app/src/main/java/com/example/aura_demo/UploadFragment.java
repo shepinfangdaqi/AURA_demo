@@ -16,6 +16,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.Toast;
 
 import androidx.activity.result.ActivityResultLauncher;
@@ -93,6 +94,11 @@ public class UploadFragment extends Fragment implements View.OnClickListener {
 
     private boolean isPortrait = true;  // 默认纵向裁剪
 
+    private View bottomNav;
+
+    private ViewPager2 viewPager;
+    private ImageView imageViewFrame;
+
     // 请求通知权限（仅示例）
     private final ActivityResultLauncher<String> requestPermissionLauncher =
             registerForActivityResult(new ActivityResultContracts.RequestPermission(), isGranted -> {
@@ -122,24 +128,30 @@ public class UploadFragment extends Fragment implements View.OnClickListener {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState){
         super.onViewCreated(view, savedInstanceState);
 
+
+        viewPager = view.findViewById(R.id.viewPager);
+
+        // 拿到 Activity 的 BottomNavigationView
+        bottomNav = requireActivity().findViewById(R.id.bottom_nav);
+        // 隐藏它
+        if (bottomNav != null) bottomNav.setVisibility(View.GONE);
+
         // 点击按钮：选择本地图片
         binding.buttonCamera.setOnClickListener(this);
 
         binding.buttonChoose.setOnClickListener(this);
 
-        binding.buttonToggleOrientation.setOnClickListener(this);
-
         binding.buttonDelete.setOnClickListener(this);
 
-        // 当 ViewPager2 翻页时，可处理回调
-        binding.viewPager.registerOnPageChangeCallback(new ViewPager2.OnPageChangeCallback(){
+
+        // 注册翻页回调
+        binding.viewPager.registerOnPageChangeCallback(new ViewPager2.OnPageChangeCallback() {
             @Override
-            public void onPageSelected(int position){
+            public void onPageSelected(int position) {
                 super.onPageSelected(position);
                 if (position >= 0 && position < downloadUrls.size()) {
-
                     currentUrl = downloadUrls.get(position);
-                    Log.d(TAG, "页面切换到位置 " + position + ", 图片 URI: " + currentUrl);
+                    Log.d(TAG, getString(R.string.page_switch) + position + ", 图片 URI: " + currentUrl);
                 }
             }
         });
@@ -159,7 +171,7 @@ public class UploadFragment extends Fragment implements View.OnClickListener {
 //                        uploadFromUri(fileUri);
                     } else {
                         Log.w(TAG, "File URI is null");
-                        Toast.makeText(getContext(), "未选择任何文件", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(getContext(), R.string.choose_no_file, Toast.LENGTH_SHORT).show();
                     }
                 }
         );
@@ -175,9 +187,9 @@ public class UploadFragment extends Fragment implements View.OnClickListener {
             String deviceName = args.getString("deviceName");
             type = args.getString("type");
             Log.d("UploadFragment", "Device ID: " + deviceId + ", Device Name: " + deviceName);
-            Toast.makeText(getContext(), "设备ID: " + deviceId + ", 设备名称: " + deviceName, Toast.LENGTH_LONG).show();
+            Toast.makeText(getContext(), "Device ID: " + deviceId + ", Device Name: " + deviceName, Toast.LENGTH_LONG).show();
         }
-        binding.topAppBar.setTitle(type);
+//        binding.topAppBar.setTitle(type);
 
         // 如果想测试存数据
 //        testLeanCloudSave();
@@ -191,33 +203,11 @@ public class UploadFragment extends Fragment implements View.OnClickListener {
         updateUI(LCUser.getCurrentUser());
     }
 
-    /**
-     * 示例方法：创建一个 Todo 对象并保存到 LeanCloud
-     */
-    public void testLeanCloudSave(){
-        Log.i(TAG, "testLeanCloudSave: ");
-        LCObject todo = new LCObject("Todo");
-        todo.put("title", "工程师周会");
-        todo.put("content", "周二两点，全体成员");
-
-        todo.saveInBackground().subscribe(new Observer<LCObject>() {
-            @Override
-            public void onSubscribe(Disposable d) {}
-            @Override
-            public void onNext(LCObject lcObject) {
-                // 保存成功
-                Log.d(TAG, "保存成功 objectId: " + lcObject.getObjectId());
-            }
-            @Override
-            public void onError(Throwable e) {
-                // 异常处理
-                Log.e(TAG, "保存失败", e);
-            }
-            @Override
-            public void onComplete() {
-                Log.i(TAG, "onComplete: ");
-            }
-        });
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        // 离开页面时再把底部栏显示回来
+        if (bottomNav != null) bottomNav.setVisibility(View.VISIBLE);
     }
 
     @Override
@@ -291,7 +281,7 @@ public class UploadFragment extends Fragment implements View.OnClickListener {
             Throwable cropError = UCrop.getError(data);
             if (cropError != null) {
                 Log.e(TAG, "Crop error: ", cropError);
-                Toast.makeText(getContext(), "裁剪失败", Toast.LENGTH_SHORT).show();
+                Toast.makeText(getContext(), getString(R.string.cut_fail), Toast.LENGTH_SHORT).show();
             }
         }
     }
@@ -315,7 +305,7 @@ public class UploadFragment extends Fragment implements View.OnClickListener {
 
     public void uploadFromBitmap(Bitmap bitmap) {
         try {
-            showProgressBar(getString(R.string.progress_uploading));
+//            showProgressBar(getString(R.string.progress_uploading));
             // 将 Bitmap 转换为 byte[]
             ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
             bitmap.compress(Bitmap.CompressFormat.JPEG, 100, byteArrayOutputStream); // 压缩成 JPEG 格式，质量为 80
@@ -365,14 +355,14 @@ public class UploadFragment extends Fragment implements View.OnClickListener {
                                     @Override
                                     public void onNext(LCObject lcObject) {
                                         Log.d(TAG, "User imagePaths updated.");
-                                        Toast.makeText(getContext(), "文件 URL 已添加到用户资料中", Toast.LENGTH_SHORT).show();
+                                        Toast.makeText(getContext(), getString(R.string.url_add_to_user), Toast.LENGTH_SHORT).show();
                                     }
 
                                     @Override
                                     public void onError(Throwable e) {
                                         // 更新失败
                                         Log.e(TAG, "Failed to update user imagePaths", e);
-                                        Toast.makeText(getContext(), "更新用户资料失败", Toast.LENGTH_SHORT).show();
+                                        Toast.makeText(getContext(), getString(R.string.update_user_profile_fail), Toast.LENGTH_SHORT).show();
                                     }
 
                                     @Override
@@ -385,7 +375,7 @@ public class UploadFragment extends Fragment implements View.OnClickListener {
 
                     callCloudFunctionWithObservable(lcFile.getObjectId(),lcFile.getUrl());
                     mDownloadUrl = Uri.parse(lcFile.getUrl());  // 获取上传后的文件 URL
-                    Toast.makeText(getContext(), "文件上传成功", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(getContext(), getString(R.string.file_upload_ok), Toast.LENGTH_SHORT).show();
                     updateUI(currentUser);
                     // 你可以在这里保存文件的 URL 或进行其他操作
                 }
@@ -394,7 +384,7 @@ public class UploadFragment extends Fragment implements View.OnClickListener {
                 public void onError(Throwable e) {
                     // 上传失败的处理
                     Log.e(TAG, "File upload failed", e);
-                    Toast.makeText(getContext(), "文件上传失败", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(getContext(), getString(R.string.file_update_fail), Toast.LENGTH_SHORT).show();
                 }
 
                 @Override
@@ -405,13 +395,13 @@ public class UploadFragment extends Fragment implements View.OnClickListener {
         } catch (Exception e) {
             // 捕获转换和上传过程中可能的异常
             Log.e(TAG, "Error uploading bitmap", e);
-            Toast.makeText(getContext(), "文件上传失败", Toast.LENGTH_SHORT).show();
+            Toast.makeText(getContext(), getString(R.string.file_update_fail), Toast.LENGTH_SHORT).show();
         }
     }
 
     public void deleteFile(String fileUrl) {
         try {
-            showProgressBar(getString(R.string.progress_deleting));
+//            showProgressBar(getString(R.string.progress_deleting));
 
             // 获取当前登录的用户
             LCUser currentUser = LCUser.getCurrentUser();
@@ -435,7 +425,7 @@ public class UploadFragment extends Fragment implements View.OnClickListener {
                         @Override
                         public void onNext(LCObject lcObject) {
                             Log.d(TAG, "User imagePaths updated after deletion.");
-                            Toast.makeText(getContext(), "文件已从用户资料中移除", Toast.LENGTH_SHORT).show();
+                            Toast.makeText(getContext(), getString(R.string.file_delete_from_user), Toast.LENGTH_SHORT).show();
                             updateUI(currentUser); // 更新 UI
                         }
 
@@ -443,7 +433,7 @@ public class UploadFragment extends Fragment implements View.OnClickListener {
                         public void onError(Throwable e) {
                             // 更新失败
                             Log.e(TAG, "Failed to update user imagePaths after deletion", e);
-                            Toast.makeText(getContext(), "更新用户资料失败", Toast.LENGTH_SHORT).show();
+                            Toast.makeText(getContext(), getString(R.string.update_user_profile_fail), Toast.LENGTH_SHORT).show();
                         }
 
                         @Override
@@ -456,29 +446,17 @@ public class UploadFragment extends Fragment implements View.OnClickListener {
                     deleteBinUrlByUrl(fileUrl);
                 } else {
                     Log.w(TAG, "No matching URL found in user imagePaths.");
-                    Toast.makeText(getContext(), "文件 URL 不存在", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(getContext(), getString(R.string.url_no_exit), Toast.LENGTH_SHORT).show();
                 }
-
-//                int lastSlashIndex = fileUrl.lastIndexOf("/");  // 找到最后一个 / 的位置
-//                String fileName = fileUrl.substring(lastSlashIndex + 1);  // 从 / 后面提取字符串
-//                Log.i(TAG, "deleteFile: "+fileUrl+fileName);
-//
-//                // 通过 URL 删除文件
-//                LCFile fileToDelete = new LCFile(fileName, url);
-////                fileToDelete.remove(fileToDelete.getKey());
-//                String id = fileToDelete.getObjectId();
-//                Log.i(TAG, "deleteFile: name "+id);
-
-
             } else {
                 Log.w(TAG, "No current user found");
-                Toast.makeText(getContext(), "用户未登录", Toast.LENGTH_SHORT).show();
+                Toast.makeText(getContext(), getString(R.string.no_logoin), Toast.LENGTH_SHORT).show();
             }
 
         } catch (Exception e) {
             // 捕获删除过程中的异常
             Log.e(TAG, "Error deleting file", e);
-            Toast.makeText(getContext(), "文件删除失败", Toast.LENGTH_SHORT).show();
+            Toast.makeText(getContext(), getString(R.string.file_delete_fail), Toast.LENGTH_SHORT).show();
         }
     }
 
@@ -568,7 +546,7 @@ public class UploadFragment extends Fragment implements View.OnClickListener {
                     @Override
                     public void onNext(LCNull response) {
                         Log.d(TAG, "File deleted successfully: " + fileUrl);
-                        Toast.makeText(getContext(), "文件删除成功", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(getContext(), getString(R.string.file_delete_ok), Toast.LENGTH_SHORT).show();
                         updateUI(currentUser); // 更新 UI
                     }
 
@@ -576,7 +554,7 @@ public class UploadFragment extends Fragment implements View.OnClickListener {
                     public void onError(Throwable e) {
                         // 删除失败
                         Log.e(TAG, "File deletion failed", e);
-                        Toast.makeText(getContext(), "文件删除失败", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(getContext(), getString(R.string.file_delete_fail), Toast.LENGTH_SHORT).show();
                     }
 
                     @Override
@@ -747,7 +725,7 @@ public class UploadFragment extends Fragment implements View.OnClickListener {
         LCUser currentUser = LCUser.getCurrentUser();
         if (currentUser == null) {
             Log.w(TAG, "fetchUserImagePaths: user is null");
-            hideProgressBar();
+//            hideProgressBar();
             return;
         }
 
@@ -774,14 +752,14 @@ public class UploadFragment extends Fragment implements View.OnClickListener {
                     downloadUrls.clear();
                     updateViewPager(downloadUrls);
                 }
-                hideProgressBar();
+//                hideProgressBar();
             }
 
             @Override
             public void onError(Throwable e) {
                 Log.e(TAG, "Error fetching user data", e);
-                hideProgressBar();
-                Toast.makeText(getContext(), "获取用户数据失败", Toast.LENGTH_SHORT).show();
+//                hideProgressBar();
+                Toast.makeText(getContext(), getString(R.string.get_user_date_fail), Toast.LENGTH_SHORT).show();
             }
 
             @Override
@@ -800,25 +778,9 @@ public class UploadFragment extends Fragment implements View.OnClickListener {
             adapter.setImageUrls(urls);
             binding.layoutDownload.setVisibility(View.VISIBLE);
             binding.layoutChoosePhoto.setVisibility(View.VISIBLE);
-            binding.layoutChoosehengshu.setVisibility(View.VISIBLE);
+//            binding.layoutChoosehengshu.setVisibility(View.VISIBLE);
             binding.layoutDelete.setVisibility(View.VISIBLE);
         }
-    }
-
-    /**
-     * Shows the progress bar with the given caption
-     */
-    private void showProgressBar(String caption){
-        binding.caption.setText(caption);
-        binding.progressBar.setVisibility(View.VISIBLE);
-    }
-
-    /**
-     * Hides the progress bar
-     */
-    private void hideProgressBar(){
-        binding.caption.setText("");
-        binding.progressBar.setVisibility(View.INVISIBLE);
     }
 
     /**
@@ -911,26 +873,8 @@ public class UploadFragment extends Fragment implements View.OnClickListener {
 //        changeCurrentUrl(deviceId,currentUrl);
         findBinUrlByUrl(currentUrl,false);
         Log.i(TAG, "updataUrl: "+currentUrl);
+        Toast.makeText(getContext(), getString(R.string.my_update_ok), Toast.LENGTH_SHORT).show();
 
-    }
-
-    public void toggleOrientation() {
-        // 获取按钮
-        Button button = binding.buttonToggleOrientation;
-
-        // 切换方向
-        if (isPortrait) {
-            // 如果当前是竖屏，切换为横屏
-//            setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
-            button.setText("竖屏");  // 更新按钮文本为 "横屏"
-        } else {
-            // 如果当前是横屏，切换为竖屏
-//            setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
-            button.setText("横屏");  // 更新按钮文本为 "竖屏"
-        }
-
-        // 切换标志位
-        isPortrait = !isPortrait;
     }
 
     @Override
@@ -948,9 +892,11 @@ public class UploadFragment extends Fragment implements View.OnClickListener {
          else if (i == R.id.button_choose) {
              Log.i(TAG, "onClick: choose");
              updataUrl();
-         } else if (i == R.id.button_toggle_orientation) {
-             toggleOrientation();
-         }else if(i == R.id.button_delete){
+         }
+//         else if (i == R.id.button_toggle_orientation) {
+//             toggleOrientation();
+//         }
+         else if(i == R.id.button_delete){
              deleteFile(currentUrl); //去掉http://
         }
         // else if (i == R.id.buttonDownload) {...}

@@ -1,116 +1,86 @@
 <?xml version="1.0" encoding="utf-8"?>
 <com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/cardViewDevice"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_marginBottom="8dp"
     app:cardElevation="4dp"
-    app:cardCornerRadius="8dp"
-    app:strokeWidth="10dp"
-    app:strokeColor="#000000">
+    app:cardCornerRadius="8dp">
 
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:gravity="center_vertical"
+        android:layout_height="wrap_content"
         android:orientation="horizontal"
+        android:gravity="center_vertical"
         android:padding="16dp">
-
 
         <LinearLayout
             android:layout_width="0dp"
-            android:layout_height="180dp"
-            android:layout_marginStart="16dp"
+            android:layout_height="wrap_content"
             android:layout_weight="1"
             android:orientation="vertical">
 
-            <!-- 新增的用于显示蓝牙名称的 TextView -->
+            <!-- 设备标识 -->
             <TextView
                 android:id="@+id/textViewDeviceId"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="AURA_GALLERY_XXXX"
                 android:textSize="16sp"
-                android:textStyle="bold"/>
+                android:textStyle="bold" />
 
-            <!-- 显示连接状态 -->
+            <!-- BLE 状态 -->
             <TextView
                 android:id="@+id/textViewBLEStatus"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
                 android:text="BLE: Disconnect"
                 android:textSize="16sp"
-                android:textColor="@android:color/black"
-                android:layout_marginTop="8dp"/>
+                android:textColor="@android:color/black" />
 
-            <!-- Status -->
+            <!-- WIFI 状态 -->
             <TextView
-                android:id="@+id/textViewStatus"
+                android:id="@+id/textViewWIFIStatus"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="状态: 在线"
-                android:textColor="@android:color/black"
-                android:textSize="16sp" />
+                android:layout_marginTop="8dp"
+                android:text="WIFI: Disconnect"
+                android:textSize="16sp"
+                android:textColor="@android:color/black" />
 
-            <!-- Mode -->
+            <!-- 模式 -->
             <TextView
                 android:id="@+id/textViewMode"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="模式: 自动"
-                android:textColor="@android:color/black"
-                android:textSize="16sp" />
+                android:layout_marginTop="8dp"
+                android:text="@string/Mode_auto"
+                android:textSize="16sp"
+                android:textColor="@android:color/black" />
 
-            <!-- Frequency -->
-            <TextView
-                android:id="@+id/textViewFrequency"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="频率: 60Hz"
-                android:textColor="@android:color/black"
-                android:textSize="16sp" />
-
-            <!-- Frequency -->
-            <TextView
-                android:id="@+id/textViewHengshu"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="横竖: 横屏"
-                android:textColor="@android:color/black"
-                android:textSize="16sp" />
-
-            <!-- Frequency -->
+            <!-- 电量 -->
             <TextView
                 android:id="@+id/textViewPower"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="电量: 100"
-                android:textColor="@android:color/black"
-                android:textSize="16sp" />
-
+                android:layout_marginTop="8dp"
+                android:text="@string/bat_100"
+                android:textSize="16sp"
+                android:textColor="@android:color/black" />
         </LinearLayout>
 
+        <!-- 更多操作按钮 -->
         <ImageButton
             android:id="@+id/buttonMore"
             android:layout_width="wrap_content"
-            android:layout_height="66dp"
-            android:layout_marginStart="8dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="16dp"
             android:contentDescription="@string/settings_options"
             android:src="@drawable/baseline_settings_24"
             android:tint="@android:color/black"
-            android:backgroundTint="@android:color/transparent"/>
-
-
-        <!-- 可选：右箭头图标，表示可点击 -->
-        <!--        <ImageView-->
-        <!--            android:id="@+id/imageViewArrow"-->
-        <!--            android:layout_width="24dp"-->
-        <!--            android:layout_height="24dp"-->
-        <!--            android:src="@drawable/image2"-->
-        <!--            android:contentDescription="Arrow"-->
-        <!--            android:tint="@android:color/darker_gray" />-->
+            android:backgroundTint="@android:color/transparent" />
 
     </LinearLayout>
 

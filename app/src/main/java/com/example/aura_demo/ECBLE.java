@@ -45,8 +45,8 @@ interface ECBLECharacteristicValueChangeCallback {
 
 public class ECBLE {
     private static final String ECBLEChineseTypeUTF8 = "utf8";
-    private static final String ECBLEChineseTypeGBK = "gbk";
-    private static String ecBLEChineseType = ECBLEChineseTypeGBK;
+    private static final String ECBLEChineseTypeGBK = "GBK";
+    private static String ecBLEChineseType = ECBLEChineseTypeUTF8;
 
     static void setChineseTypeUTF8() {
         ecBLEChineseType = ECBLEChineseTypeUTF8;

@@ -220,7 +220,7 @@ public class BluetoothFragment extends Fragment {
                 bluetoothSocket.connect(); // 尝试连接
 
                 // 连接成功
-                Toast.makeText(getContext(), "已连接到 " + device.getName(), Toast.LENGTH_SHORT).show();
+                Toast.makeText(getContext(), getString(R.string.connected_to) + device.getName(), Toast.LENGTH_SHORT).show();
 
                 // 成功后，进行数据交换等操作
                 InputStream inputStream = bluetoothSocket.getInputStream();
@@ -243,7 +243,7 @@ public class BluetoothFragment extends Fragment {
         }
 
         if (bluetoothSocket == null) {
-            Toast.makeText(getContext(), "所有连接尝试均失败，请检查设备和 UUID 配置。", Toast.LENGTH_SHORT).show();
+            Toast.makeText(getContext(), R.string.all_fail_check_uuid, Toast.LENGTH_SHORT).show();
         }
     }
 

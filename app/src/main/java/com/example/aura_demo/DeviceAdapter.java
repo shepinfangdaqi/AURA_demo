@@ -1,6 +1,8 @@
 package com.example.aura_demo;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -50,12 +52,15 @@ public class DeviceAdapter extends RecyclerView.Adapter<DeviceAdapter.DeviceView
         Device device = deviceList.get(position);
         holder.bind(device, listener);
 
-        // 根据设备的连接状态更新显示
-        if (device.isConnected()) {
-            holder.textViewBLEStatus.setText("BLE: Connected");
-        } else {
-            holder.textViewBLEStatus.setText("BLE: Disconnected");
-        }
+        Log.i("DeviceListFragment", device.getDeviceId()+"---->"+device.isConnected());
+
+        holder.textViewBLEStatus.setText(
+                device.isConnected() ? "BLE: Connected" : "BLE: Disconnect"
+        );
+
+        holder.textwifi.setText(
+                device.isWifiok() ? "WiFi: Connected" : "WiFi: Disconnect"
+        );
 
     }
 
@@ -89,36 +94,25 @@ public class DeviceAdapter extends RecyclerView.Adapter<DeviceAdapter.DeviceView
 
         TextView textViewBLEStatus;  // 显示蓝牙连接状态
 
+        TextView textwifi;
+
         public DeviceViewHolder(View itemView) {
             super(itemView);
             textViewDeviceId = itemView.findViewById(R.id.textViewDeviceId);  // 修改这里
             textViewBLEStatus = itemView.findViewById(R.id.textViewBLEStatus);  // 蓝牙连接状态显示
-            textViewStatus = itemView.findViewById(R.id.textViewStatus);
             textViewMode = itemView.findViewById(R.id.textViewMode);
-            textViewFrequency = itemView.findViewById(R.id.textViewFrequency);
-            textViewHengshu = itemView.findViewById(R.id.textViewHengshu);
             textViewPower = itemView.findViewById(R.id.textViewPower);
             buttonMore = itemView.findViewById(R.id.buttonMore);
+            textwifi = itemView.findViewById(R.id.textViewWIFIStatus);
 
 //            imageViewArrow = itemView.findViewById(R.id.imageViewArrow);
         }
 
+        @SuppressLint("SetTextI18n")
         public void bind(final Device device, final OnItemClickListener listener) {
-            // 加载图标
-//            if (device.getIconUrl() != null && !device.getIconUrl().isEmpty()) {
-//                // 如果使用 URL 加载图片
-//                imageViewIcon.setImageResource(R.drawable.image1);
-//            } else {
-//                // 使用本地资源
-//                imageViewIcon.setImageResource(R.drawable.image2);
-//            }
 
-            // 设置文本
-            textViewStatus.setText("状态: " + device.getStatus());
-            textViewMode.setText("模式: " + device.getMode());
-            textViewFrequency.setText("频率: " + device.getFrequency());
-            textViewHengshu.setText("横竖: " + device.getHengshu());
-            textViewPower.setText("电量: " + device.getPower());
+            textViewMode.setText("Mode:" + device.getMode());
+            textViewPower.setText("Power: " + device.getPower());
             // 格式化 deviceId，取前四位并拼接 "AURA_GALLERY_"
             String formattedDeviceId = "AURA_GALLERY_" + device.getDeviceId().substring(0, 4);
             textViewDeviceId.setText(formattedDeviceId);  // 显示格式化后的 deviceId

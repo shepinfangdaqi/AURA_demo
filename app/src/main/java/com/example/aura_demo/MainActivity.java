@@ -7,6 +7,7 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.view.WindowInsetsController;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -49,6 +50,15 @@ public class MainActivity extends AppCompatActivity {
         NavController navController = Navigation.findNavController(this, R.id.nav_host_fragment);
         BottomNavigationView bottomNav = findViewById(R.id.bottom_nav);
         NavigationUI.setupWithNavController(bottomNav, navController);
+
+        // —— 新增：监听导航目的地变化 —— //
+        navController.addOnDestinationChangedListener((controller, destination, args) -> {
+            if (destination.getId() == R.id.navigation_user) {
+                // 切到“用户管理”页，断开所有蓝牙连接
+                ECBLE.closeBLEConnection();
+                Toast.makeText(this, getString(R.string.change_and_disconnected), Toast.LENGTH_SHORT).show();
+            }
+        });
 
         navController.addOnDestinationChangedListener((controller, destination, args) -> {
             // API 30+ 用 WindowInsetsController

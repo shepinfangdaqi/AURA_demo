@@ -2,20 +2,24 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
     <item
         android:id="@+id/action_calendar_mode"
-        android:title="日历模式" />
+        android:title="@string/data_mode" />
     <item
         android:id="@+id/action_beautiful_image_mode"
-        android:title="美图模式" />
+        android:title="@string/image_mode" />
     <item
         android:id="@+id/action_custom_image"
-        android:title="自选图片" />
-    <item
-        android:id="@+id/action_custom_hv_choose"
-        android:title="横竖切换" />
-    <item
-        android:id="@+id/action_time"
-        android:title="设置频率" />
+        android:title="@string/diy_mode" />
     <item
         android:id="@+id/action_wifi"
-        android:title="设置wifi" />
+        android:title="@string/set_wifi" />
+
+    <item
+        android:id="@+id/action_update"
+        android:title="@string/update_image" />
+
+
+    <item
+        android:id="@+id/action_ota"
+        android:title="@string/update_bin" />
+
 </menu>

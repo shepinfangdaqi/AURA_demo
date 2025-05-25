@@ -50,12 +50,12 @@ public class UserFragment extends Fragment {
     private void updateUI() {
         LCUser current = LCUser.getCurrentUser();
         if (current == null) {
-            tvStatus.setText("未登录");
-            btnLogin.setText("登录");
+            tvStatus.setText(R.string.no_logoin);
+            btnLogin.setText(R.string.my_login);
             btnLogin.setOnClickListener(v -> showLoginDialog());
         } else {
-            tvStatus.setText("你好，" + current.getUsername());
-            btnLogin.setText("退出登录");
+            tvStatus.setText(getString(R.string.my_hi) + current.getUsername());
+            btnLogin.setText(R.string.my_logout);
             btnLogin.setOnClickListener(v -> {
                 LCUser.logOut();
                 updateUI();
@@ -91,7 +91,7 @@ public class UserFragment extends Fragment {
                         @Override public void onSubscribe(Disposable d) {}
                         @Override public void onNext(LCUser user) {
                             Toast.makeText(getContext(),
-                                    "登录成功，欢迎 " + user.getUsername(),
+                                    getString(R.string.login_ok_welcon) + user.getUsername(),
                                     Toast.LENGTH_SHORT).show();
                             dialog.dismiss();
                             updateUI();
@@ -99,7 +99,7 @@ public class UserFragment extends Fragment {
                         @Override public void onError(Throwable e) {
                             progressBar.setVisibility(View.GONE);
                             Toast.makeText(getContext(),
-                                    "登录失败: " + e.getMessage(),
+                                    getString(R.string.login_fail) + e.getMessage(),
                                     Toast.LENGTH_SHORT).show();
                         }
                         @Override public void onComplete() {}
@@ -126,7 +126,7 @@ public class UserFragment extends Fragment {
                             // 注册成功后直接登录
                             LCUser.logIn(email, password);
                             Toast.makeText(getContext(),
-                                    "注册并登录成功",
+                                    getString(R.string.login_and_register_ok),
                                     Toast.LENGTH_SHORT).show();
                             dialog.dismiss();
                             updateUI();
@@ -134,7 +134,7 @@ public class UserFragment extends Fragment {
                         @Override public void onError(Throwable e) {
                             progressBar.setVisibility(View.GONE);
                             Toast.makeText(getContext(),
-                                    "注册失败: " + e.getMessage(),
+                                    getString(R.string.register_fail) + e.getMessage(),
                                     Toast.LENGTH_SHORT).show();
                         }
                         @Override public void onComplete() {}

@@ -180,8 +180,8 @@ public class MainBLUEActivity extends AppCompatActivity implements EasyPermissio
                     startActivities(new Intent[]{new Intent().setClass(this, DeviceActivity.class)});
                     overridePendingTransition(R.anim.jump_enter_anim, R.anim.jump_exit_anim);
                 } else {
-                    showToast("蓝牙连接失败,errCode=" + errCode + ",errMsg=" + errMsg);
-                    showAlert("提示", "蓝牙连接失败,errCode=" + errCode + ",errMsg=" + errMsg, () -> {
+                    showToast(getString(R.string.ble_errcode) + errCode + ",errMsg=" + errMsg);
+                    showAlert(getString(R.string.my_notice), getString(R.string.ble_errcode) + errCode + ",errMsg=" + errMsg, () -> {
                     });
                 }
             }));
@@ -215,7 +215,7 @@ public class MainBLUEActivity extends AppCompatActivity implements EasyPermissio
     void showConnectDialog() {
         if (connectDialog == null) {
             connectDialog = new ProgressDialog(MainBLUEActivity.this);
-            connectDialog.setMessage("连接中...");
+            connectDialog.setMessage(getString(R.string.my_connecting));
             connectDialog.setCancelable(false);
         }
         connectDialog.show();
@@ -232,7 +232,7 @@ public class MainBLUEActivity extends AppCompatActivity implements EasyPermissio
     void openBluetoothAdapter() {
         ECBLE.onBluetoothAdapterStateChange((boolean ok, int errCode, String errMsg) -> runOnUiThread(() -> {
             if (!ok) {
-                showAlert("提示", "openBluetoothAdapter error,errCode=" + errCode + ",errMsg=" + errMsg, () -> runOnUiThread(() -> {
+                showAlert(getString(R.string.my_notice), "openBluetoothAdapter error,errCode=" + errCode + ",errMsg=" + errMsg, () -> runOnUiThread(() -> {
                     if (errCode == 10001) {
                         //蓝牙开关没有打开
                         startActivity(new Intent(Settings.ACTION_BLUETOOTH_SETTINGS));
@@ -244,15 +244,15 @@ public class MainBLUEActivity extends AppCompatActivity implements EasyPermissio
                     //获取定位权限失败
                     if (errCode == 10003) {
                         new AppSettingsDialog.Builder(this)
-                                .setTitle("提示")
-                                .setRationale("请打开应用的定位权限")
+                                .setTitle(getString(R.string.my_notice))
+                                .setRationale(R.string.need_location_pre)
                                 .build().show();
                     }
                     //获取蓝牙连接附近设备的权限失败
                     if (errCode == 10004) {
                         new AppSettingsDialog.Builder(this)
-                                .setTitle("提示")
-                                .setRationale("请打开应用的蓝牙权限，允许应用使用蓝牙连接附近的设备")
+                                .setTitle(getString(R.string.my_notice))
+                                .setRationale(R.string.need_ble_pre)
                                 .build().show();
                     }
                 }));

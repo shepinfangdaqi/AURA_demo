@@ -9,7 +9,11 @@
     <fragment
         android:id="@+id/navigation_devices"
         android:name="com.example.aura_demo.DeviceListFragment"
-        android:label="设备管理" >
+        android:label="@string/device_manage" >
+
+        <action
+            android:id="@+id/action_deviceListFragment_to_uploadFragment"
+            app:destination="@id/uploadFragment" />
         <!-- 保留原有到 Wifi/Blue/UploadFragment 的子 action -->
     </fragment>
 
@@ -17,13 +21,13 @@
     <fragment
         android:id="@+id/navigation_user"
         android:name="com.example.aura_demo.UserFragment"
-        android:label="用户管理" />
+        android:label="@string/user_manage" />
 
     <!-- 新增：添加设备，指向蓝牙搜索页面 BlueFragment -->
     <fragment
         android:id="@+id/navigation_add_device"
         android:name="com.example.aura_demo.MainBLUEFragment"
-        android:label="添加设备" />
+        android:label="@string/add_device" />
 
 <!--    &lt;!&ndash; 3) 用户管理 &ndash;&gt;-->
 <!--    <fragment-->
@@ -41,14 +45,8 @@
             android:id="@+id/action_mainFragment_to_loginFragment"
             app:destination="@id/EmailPasswordFragment" />
         <action
-            android:id="@+id/action_mainFragment_to_profileFragment"
-            app:destination="@id/uploadFragment" />
-        <action
             android:id="@+id/action_mainFragment_to_bluetoothFragment"
             app:destination="@id/bluetoothFragment" />
-        <action
-            android:id="@+id/action_mainFragment_to_calendar"
-            app:destination="@id/uploadFragment" />
 <!--        <action-->
 <!--            android:id="@+id/action_mainFragment_to_firebase"-->
 <!--            app:destination="@id/firebaseFragment" />-->
@@ -89,20 +87,6 @@
         <action
             android:id="@+id/action_deviceListFragment_to_wifiFragment"
             app:destination="@+id/WifiConnectFragment"/>
-    </fragment>
-
-<!--    <fragment-->
-<!--        android:id="@+id/firebaseFragment"-->
-<!--        android:name="com.example.aura_demo.FirebaseFragment"-->
-<!--        tools:layout="@layout/fragment_firebase">-->
-<!--    </fragment>-->
-    <fragment
-        android:id="@+id/WifiConnectFragment"
-        android:name="com.example.aura_demo.WifiConnectFragment"
-        tools:layout="@layout/fragment_wifi_connect">
-        <action
-            android:id="@+id/action_wifi_connect_to_deviceList"
-            app:destination="@+id/deviceListFragment" />
     </fragment>
 
     <fragment

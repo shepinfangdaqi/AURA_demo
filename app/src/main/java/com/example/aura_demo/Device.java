@@ -2,6 +2,10 @@ package com.example.aura_demo;
 // Device.java
 
 
+import android.util.Log;
+
+import java.util.Objects;
+
 public class Device {
     private String iconUrl; // 设备图标的 URL 或资源名
     private String status;
@@ -19,6 +23,8 @@ public class Device {
 
     private boolean connected;  // 连接状态
 
+    private boolean wifiok;  // 连接状态
+
     // 空构造函数（Firebase 需要）
     public Device() {
     }
@@ -32,8 +38,8 @@ public class Device {
         this.hengshu = hengshu;
         this.timeZone = timeZone;
         this.power = power;
-        this.bleName = bleName;  // 初始化 BLE 名称
-        this.connected = connected;  // 默认未连接
+//        this.bleName = bleName;  // 初始化 BLE 名称
+//        this.connected = connected;  // 默认未连接
     }
     public String gettimeZone() {
         return timeZone;
@@ -50,7 +56,16 @@ public class Device {
 
     public String getDeviceId(){return deviceId;}
 
-    public void setDeviceId(String deviceId){this.deviceId = deviceId;}
+    public void setDeviceId(String deviceId){
+        this.deviceId = deviceId;
+        if (deviceId != null && deviceId.length() >= 4) {
+            // 前四位 + 前缀
+            this.bleName = "AURA_GALLERY_" + deviceId.substring(0, 4);
+        } else {
+            // 非预期长度，直接用原 ID
+            this.bleName = deviceId != null ? deviceId : "";
+        }
+    }
 
     public void setIconUrl(String iconUrl) {
         this.iconUrl = iconUrl;
@@ -69,7 +84,21 @@ public class Device {
     }
 
     public void setMode(String mode) {
-        this.mode = mode;
+        String txt = "";
+        Log.i("huihui", "setMode:"+mode);
+        if(Objects.equals(mode, "自选图片")|| Objects.equals(mode, "Custom image"))
+        {
+            txt = "Custom image";
+        }
+        else if(Objects.equals(mode, "美图模式") || Objects.equals(mode, "Image mode"))
+        {
+            Log.i("huihui", "确认美图模式");
+            txt = "Image mode";
+        }
+        else{
+            txt = "Calendar mode";
+        }
+        this.mode = txt;
     }
 
     public String getFrequency() {
@@ -104,4 +133,8 @@ public class Device {
     public void setConnected(boolean connected) {
         this.connected = connected;
     }
+
+    public void setWifiok(boolean wifiok){this.wifiok = wifiok;}
+
+    public  boolean isWifiok(){return wifiok;}
 }

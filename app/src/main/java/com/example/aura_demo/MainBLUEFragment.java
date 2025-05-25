@@ -31,6 +31,7 @@ import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.core.view.WindowInsetsControllerCompat;
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.ViewModelProvider;
 import androidx.navigation.Navigation;
 import androidx.navigation.fragment.NavHostFragment;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
@@ -64,6 +65,8 @@ public class MainBLUEFragment extends Fragment implements EasyPermissions.Permis
 
     // 存储当前用户已配对的 deviceId（如 "7432F6E385A0"）
     private final Set<String> pairedDeviceIds = new HashSet<>();
+
+    private String connectingDeviceName;
 
     static class DeviceInfo {
         String id;
@@ -138,6 +141,8 @@ public class MainBLUEFragment extends Fragment implements EasyPermissions.Permis
     private Adapter listViewAdapter = null;
     private ProgressDialog connectDialog = null;
 
+    private BleViewModel bleViewModel;
+
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container,
@@ -150,7 +155,14 @@ public class MainBLUEFragment extends Fragment implements EasyPermissions.Permis
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
+        ECBLE.setChineseTypeUTF8();
+
         uiInit(view);
+
+        // 取得 Activity 级别的 ViewModel
+        bleViewModel = new ViewModelProvider(requireActivity())
+                .get(BleViewModel.class);
+        setupBleCallback();
     }
 
     @Override
@@ -166,12 +178,41 @@ public class MainBLUEFragment extends Fragment implements EasyPermissions.Permis
         }
 
         openBluetoothAdapter();
+
+        notifyConnected("ALL DEVICE",false);
+//        startBluetoothDevicesDiscovery();
+
     }
 
     @Override
     public void onStop() {
         super.onStop();
         // ECBLE.stopBluetoothDevicesDiscovery(getContext());
+    }
+
+    private void setupBleCallback() {
+        ECBLE.onBLEConnectionStateChange((boolean ok, int errCode, String errMsg) -> {
+            // 拿到当前连接的设备名
+            String fullName = connectingDeviceName;
+            if (fullName == null || !fullName.startsWith("AURA_GALLERY_")) {
+                return;
+            }
+            // 发布事件：ok==true 为连接, false 为断开
+            bleViewModel.postEvent(fullName, ok);
+
+            // （可选）弹个 Toast
+            requireActivity().runOnUiThread(() -> {
+                Toast.makeText(getContext(),
+                        ok ? fullName + getString(R.string.my_connect) : fullName + getString(R.string.my_disconnect),
+                        Toast.LENGTH_SHORT).show();
+            });
+
+            // （可选）如果想自动回到列表页
+            if (ok) {
+                NavHostFragment.findNavController(this)
+                        .navigate(R.id.navigation_devices);
+            }
+        });
     }
 
     private void loadPairedDeviceIds() {
@@ -213,6 +254,8 @@ public class MainBLUEFragment extends Fragment implements EasyPermissions.Permis
                 swipeRefreshLayout.setRefreshing(false);
                 // 权限
                 openBluetoothAdapter();
+//                startBluetoothDevicesDiscovery();
+//                ECBLE.startBluetoothDevicesDiscovery(requireContext());
             }, 1000);
         });
 
@@ -242,6 +285,7 @@ public class MainBLUEFragment extends Fragment implements EasyPermissions.Permis
                         }
                         hideConnectDialog();
                         String changedevicename = deviceInfo.name;
+                        connectingDeviceName = changedevicename;
 
                         if (ok) {
 
@@ -249,7 +293,7 @@ public class MainBLUEFragment extends Fragment implements EasyPermissions.Permis
 
                             String fullName = deviceInfo.name;
                             if (fullName == null || !fullName.startsWith("AURA_GALLERY_")) {
-                                showToast("设备名称不符合预期: " + fullName);
+                                showToast(getString(R.string.device_name_wrong) + fullName);
                                 return;
                             }
 
@@ -297,7 +341,7 @@ public class MainBLUEFragment extends Fragment implements EasyPermissions.Permis
                             }
                         } else {
                             // 连接失败
-                            showToast("BLE 连接失败: " + errMsg);
+                            showToast(getString(R.string.ble_connect_fail) + errMsg);
                             notifyConnected(changedevicename,false);
                         }
                     });
@@ -309,27 +353,29 @@ public class MainBLUEFragment extends Fragment implements EasyPermissions.Permis
     }
 
     /** 通知 DeviceListFragment 更新 UI 为已连接 **/
-    private void notifyConnected(String fullName,boolean isok) {
-        // 1. 发回结果给 DeviceListFragment
+    private void notifyConnected(String fullName, boolean isok) {
         Bundle result = new Bundle();
         result.putString("ble_connected_name", fullName);
+        // 一定要把 isok 也放进去
+        result.putBoolean("is_connected", isok);
 
-        Log.i(TAG, "!!!! BLE states:"+fullName+"--->"+isok);
+        Log.i(TAG, "!!!! BLE states: " + fullName + " ---> " + isok);
 
+        // 这里用 “ble_connected” 作为 key
         getParentFragmentManager().setFragmentResult("ble_connected", result);
 
-        // 2. 提示用户
-        requireActivity().runOnUiThread(() -> {
-            Toast.makeText(getContext(),
-                            "设备 " + fullName + " 已连接",
-                            Toast.LENGTH_SHORT)
-                    .show();
-
-            // 3. 跳转回设备列表 Tab
-            NavHostFragment.findNavController(this)
-                    .navigate(R.id.navigation_devices);
-        });
+        if (isok) {
+            requireActivity().runOnUiThread(() -> {
+                Toast.makeText(getContext(),
+                                "Device: " + fullName + " Connected",
+                                Toast.LENGTH_SHORT)
+                        .show();
+                NavHostFragment.findNavController(this)
+                        .navigate(R.id.navigation_devices);
+            });
+        }
     }
+
 
     public void send(String data){
         Log.i(TAG, "send data: "+data);
@@ -387,7 +433,7 @@ public class MainBLUEFragment extends Fragment implements EasyPermissions.Permis
                                 getActivity().runOnUiThread(new Runnable() {
                                     @Override
                                     public void run() {
-                                        Toast.makeText(getContext(), "设备 ID 已添加到用户资料中", Toast.LENGTH_SHORT).show();
+                                        Toast.makeText(getContext(), getString(R.string.id_add_to_user), Toast.LENGTH_SHORT).show();
                                     }
                                 });
                             }
@@ -400,7 +446,7 @@ public class MainBLUEFragment extends Fragment implements EasyPermissions.Permis
                                 getActivity().runOnUiThread(new Runnable() {
                                     @Override
                                     public void run() {
-                                        Toast.makeText(getContext(), "更新用户资料失败", Toast.LENGTH_SHORT).show();
+                                        Toast.makeText(getContext(), getString(R.string.update_user_fail), Toast.LENGTH_SHORT).show();
                                     }
                                 });
                             }
@@ -415,7 +461,7 @@ public class MainBLUEFragment extends Fragment implements EasyPermissions.Permis
                 getActivity().runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-                        Toast.makeText(getContext(), "该设备 ID 已存在", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(getContext(), getString(R.string.device_id_exit), Toast.LENGTH_SHORT).show();
                     }
                 });
             }
@@ -460,7 +506,7 @@ public class MainBLUEFragment extends Fragment implements EasyPermissions.Permis
 
                             // 设置新对象的属性
                             deviceObject.put("deviceId", id);
-                            deviceObject.put("mode", "每日精选");
+                            deviceObject.put("mode", "日历模式");
                             deviceObject.put("deviceFrequency", "1h");
                             deviceObject.put("status", "在线");
                             deviceObject.put("hengshu", "横屏");
@@ -481,7 +527,7 @@ public class MainBLUEFragment extends Fragment implements EasyPermissions.Permis
                                             getActivity().runOnUiThread(new Runnable() {
                                                 @Override
                                                 public void run() {
-                                                    Toast.makeText(getContext(), "设备已添加到设备表中", Toast.LENGTH_SHORT).show();
+                                                    Toast.makeText(getContext(), getString(R.string.device_add_list), Toast.LENGTH_SHORT).show();
                                                 }
                                             });
                                         }
@@ -493,7 +539,7 @@ public class MainBLUEFragment extends Fragment implements EasyPermissions.Permis
                                             getActivity().runOnUiThread(new Runnable() {
                                                 @Override
                                                 public void run() {
-                                                    Toast.makeText(getContext(), "添加设备失败", Toast.LENGTH_SHORT).show();
+                                                    Toast.makeText(getContext(), getString(R.string.add_device_fail), Toast.LENGTH_SHORT).show();
                                                 }
                                             });
                                         }
@@ -508,7 +554,7 @@ public class MainBLUEFragment extends Fragment implements EasyPermissions.Permis
                             getActivity().runOnUiThread(new Runnable() {
                                 @Override
                                 public void run() {
-                                    Toast.makeText(getContext(), "该设备 ID 已存在", Toast.LENGTH_SHORT).show();
+                                    Toast.makeText(getContext(), getString(R.string.device_id_exit), Toast.LENGTH_SHORT).show();
                                 }
                             });
                         }
@@ -522,7 +568,7 @@ public class MainBLUEFragment extends Fragment implements EasyPermissions.Permis
                         getActivity().runOnUiThread(new Runnable() {
                             @Override
                             public void run() {
-                                Toast.makeText(getContext(), "查询失败", Toast.LENGTH_SHORT).show();
+                                Toast.makeText(getContext(), getString(R.string.check_fail), Toast.LENGTH_SHORT).show();
                             }
                         });
                     }
@@ -556,7 +602,7 @@ public class MainBLUEFragment extends Fragment implements EasyPermissions.Permis
     void showConnectDialog() {
         if (connectDialog == null && getContext() != null) {
             connectDialog = new ProgressDialog(getContext());
-            connectDialog.setMessage("连接中...");
+            connectDialog.setMessage(getString(R.string.my_connecting));
             connectDialog.setCancelable(false);
         }
         if (connectDialog != null) {
@@ -581,7 +627,7 @@ public class MainBLUEFragment extends Fragment implements EasyPermissions.Permis
             if (getActivity() != null) {
                 getActivity().runOnUiThread(() -> {
                     if (!ok) {
-                        showAlert("提示", "openBluetoothAdapter error,errCode=" + errCode + ",errMsg=" + errMsg, () -> {
+                        showAlert(getString(R.string.my_notice), "openBluetoothAdapter error,errCode=" + errCode + ",errMsg=" + errMsg, () -> {
                             if (errCode == 10001) {
                                 // 蓝牙开关没有打开
                                 startActivity(new Intent(Settings.ACTION_BLUETOOTH_SETTINGS));
@@ -593,15 +639,15 @@ public class MainBLUEFragment extends Fragment implements EasyPermissions.Permis
                             // 获取定位权限失败
                             if (errCode == 10003) {
                                 new AppSettingsDialog.Builder(requireActivity())
-                                        .setTitle("提示")
-                                        .setRationale("请打开应用的定位权限")
+                                        .setTitle(getString(R.string.my_notice))
+                                        .setRationale(getString(R.string.need_location_pre))
                                         .build().show();
                             }
                             // 获取蓝牙连接附近设备的权限失败
                             if (errCode == 10004) {
                                 new AppSettingsDialog.Builder(requireActivity())
-                                        .setTitle("提示")
-                                        .setRationale("请打开应用的蓝牙权限，允许应用使用蓝牙连接附近的设备")
+                                        .setTitle(getString(R.string.my_notice))
+                                        .setRationale(getString(R.string.need_ble_pre))
                                         .build().show();
                             }
                         });
